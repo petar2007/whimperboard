@@ -37,7 +37,6 @@ export default function Home() {
   const [activeModal, setActiveModal] = useState(null);
   const [deferredPrompt, setDeferredPrompt] = useState(null);
 
-  // Provera sesije i PWA instalacije
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
@@ -251,13 +250,9 @@ export default function Home() {
     return <div className="min-h-screen bg-white flex items-center justify-center font-bold">Loading...</div>;
   }
 
-  // ==========================================
-  // JAVNI LANDING PAGE (POSERILAC NIJE ULOGOVAN)
-  // ==========================================
   if (!user) {
     return (
       <div className="min-h-screen bg-white text-zinc-900 font-sans">
-        {/* NAV BAR */}
         <header className="border-b border-zinc-200 py-5 px-8 bg-white sticky top-0 z-30">
           <div className="max-w-6xl mx-auto flex justify-between items-center">
             <div className="flex items-center gap-2">
@@ -280,7 +275,6 @@ export default function Home() {
           </div>
         </header>
 
-        {/* HERO SECTION */}
         <section className="max-w-4xl mx-auto text-center px-6 pt-20 pb-16">
           <span className="bg-lime-100 border border-lime-300 text-black text-[11px] font-black uppercase tracking-wider px-3 py-1 rounded-full">
             Designed for Small Pet Boarding Kennels
@@ -301,7 +295,6 @@ export default function Home() {
           </div>
         </section>
 
-        {/* SINGLE PRICING CARD SECTION */}
         <section className="bg-zinc-50 border-y border-zinc-200 py-20 px-6">
           <div className="max-w-md mx-auto bg-white border-2 border-zinc-900 rounded-3xl p-8 shadow-2xl relative">
             <div className="absolute -top-4 right-6 bg-lime-400 border border-black font-black text-[10px] uppercase tracking-wider px-3 py-1 rounded-full text-black">
@@ -332,7 +325,6 @@ export default function Home() {
           </div>
         </section>
 
-        {/* AUTH MODAL */}
         {showAuthModal && (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
             <div className="bg-white border-2 border-zinc-900 rounded-3xl p-8 max-w-md w-full shadow-2xl relative">
@@ -431,9 +423,6 @@ export default function Home() {
     );
   }
 
-  // ==========================================
-  // GLAVNA APLIKACIJA (ULOGOVAN KORISNIK)
-  // ==========================================
   return (
     <div className="min-h-screen bg-white text-zinc-900 font-sans pb-12 relative">
       <header className="bg-lime-400 px-8 py-6 border-b border-lime-500 shadow-sm relative z-20">
@@ -464,7 +453,6 @@ export default function Home() {
         </div>
       </header>
 
-      {/* DROPDOWN MENU */}
       {menuOpen && (
         <div className="absolute top-24 left-8 bg-white border-2 border-zinc-900 rounded-2xl shadow-2xl w-64 py-3 z-30">
           <div className="px-4 py-2 border-b border-zinc-100">
@@ -513,7 +501,6 @@ export default function Home() {
         </div>
       )}
 
-      {/* MAIN GRID */}
       <main className="max-w-6xl mx-auto px-8 pt-8" onClick={() => menuOpen && setMenuOpen(false)}>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
           {boxes.map((box) => (
@@ -581,7 +568,6 @@ export default function Home() {
         </div>
       </main>
 
-      {/* MODAL FOR DOG & REMINDERS */}
       {selectedBox && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
           <div className="bg-white border-2 border-zinc-900 w-full max-w-lg rounded-2xl p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto">
@@ -749,7 +735,7 @@ export default function Home() {
                 <p className="text-xs text-zinc-600 leading-relaxed mb-4">Are you sure you want to delete your account? This action permanently wipes your email, password, pet records, and entire profile from our servers.</p>
                 <div className="flex justify-end gap-2">
                   <button onClick={() => setActiveModal(null)} className="bg-zinc-100 hover:bg-zinc-200 text-zinc-700 font-bold text-xs px-4 py-2 rounded-xl transition">Cancel</button>
-                  <button onClick={handleDeleteAccount} className="bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs px-4 py-2 rounded-xl transition">Confirm Delete</button>
+                  <button onClick={handleDeleteAccount} className="bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs px-4 py-2 rounded-xl transition">Yes, Delete Everything</button>
                 </div>
               </div>
             )}
