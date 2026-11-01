@@ -1,0 +1,761 @@
+'use client';
+import { useState, useEffect } from 'react';
+import { supabase } from '@/lib/supabase';
+
+export default function Home() {
+  const [user, setUser] = useState(null);
+  const [loadingAuth, setLoadingAuth] = useState(true);
+  
+  // Auth forme state
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [authError, setAuthError] = useState('');
+  const [authMessage, setAuthMessage] = useState('');
+
+  // App state
+  const defaultBoxes = [
+    { id: 1, name: 'Box 1', pet: null },
+    { id: 2, name: 'Box 2', pet: null },
+    { id: 3, name: 'Box 3', pet: null },
+    { id: 4, name: 'Box 4', pet: null },
+    { id: 5, name: 'Box 5', pet: null },
+    { id: 6, name: 'Box 6', pet: null },
+  ];
+
+  const [boxes, setBoxes] = useState(defaultBoxes);
+  const [selectedBox, setSelectedBox] = useState(null);
+  const [formData, setFormData] = useState({
+    dogName: '',
+    breed: '',
+    notes: '',
+    reminders: [],
+  });
+
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [activeModal, setActiveModal] = useState(null);
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+
+  // Provera sesije i PWA instalacije
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        fetchUserBoxes(session.user.id);
+      }
+      setLoadingAuth(false);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        fetchUserBoxes(session.user.id);
+      } else {
+        setBoxes(defaultBoxes);
+      }
+    });
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const fetchUserBoxes = async (userId) => {
+    const { data } = await supabase
+      .from('user_boxes')
+      .select('boxes_data')
+      .eq('user_id', userId)
+      .single();
+
+    if (data && data.boxes_data) {
+      setBoxes(data.boxes_data);
+    } else {
+      setBoxes(defaultBoxes);
+    }
+  };
+
+  const saveBoxes = async (newBoxes) => {
+    setBoxes(newBoxes);
+    if (!user) return;
+
+    const { data } = await supabase
+      .from('user_boxes')
+      .select('id')
+      .eq('user_id', user.id)
+      .single();
+
+    if (data) {
+      await supabase
+        .from('user_boxes')
+        .update({ boxes_data: newBoxes, updated_at: new Date() })
+        .eq('user_id', user.id);
+    } else {
+      await supabase
+        .from('user_boxes')
+        .insert([{ user_id: user.id, boxes_data: newBoxes }]);
+    }
+  };
+
+  const handleAuth = async (e) => {
+    e.preventDefault();
+    setAuthError('');
+    setAuthMessage('');
+
+    if (isSignUp && password.length < 8) {
+      setAuthError('Password must be at least 8 characters long.');
+      return;
+    }
+
+    if (isSignUp) {
+      const { error } = await supabase.auth.signUp({ email, password });
+      if (error) {
+        setAuthError(error.message);
+      } else {
+        setAuthMessage('Account created successfully! Logging in...');
+      }
+    } else {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) {
+        setAuthError('Invalid email or password. Please try again.');
+      }
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setAuthError('');
+    const { error } = await supabase.auth.signInWithOAuth({ provider: 'google' });
+    if (error) setAuthError(error.message);
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setBoxes(defaultBoxes);
+    setMenuOpen(false);
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!user) return;
+
+    try {
+      const response = await fetch('/api/delete-user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id }),
+      });
+
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Failed to delete account');
+
+      await supabase.auth.signOut();
+      setUser(null);
+      setActiveModal(null);
+      setBoxes(defaultBoxes);
+      alert('Your account and all associated data have been completely deleted.');
+    } catch (err) {
+      console.error(err);
+      setAuthError('Failed to delete account completely.');
+      setActiveModal(null);
+    }
+  };
+
+  const handleInstallApp = () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      deferredPrompt.userChoice.then((choiceResult) => {
+        if (choiceResult.outcome === 'accepted') {
+          console.log('User accepted the install prompt');
+        }
+        setDeferredPrompt(null);
+      });
+    } else {
+      alert('To install on iOS: tap Share icon and select "Add to Home Screen". On Android: open browser menu and select "Install app".');
+    }
+  };
+
+  const handleOpenModal = (box) => {
+    setSelectedBox(box);
+    if (box.pet) {
+      setFormData(box.pet);
+    } else {
+      setFormData({
+        dogName: '',
+        breed: '',
+        notes: '',
+        reminders: [],
+      });
+    }
+  };
+
+  const handleAddReminder = () => {
+    setFormData({
+      ...formData,
+      reminders: [
+        ...formData.reminders,
+        { id: Date.now(), text: '', date: '', time: '' },
+      ],
+    });
+  };
+
+  const handleUpdateReminder = (id, field, value) => {
+    const updated = formData.reminders.map((r) =>
+      r.id === id ? { ...r, [field]: value } : r
+    );
+    setFormData({ ...formData, reminders: updated });
+  };
+
+  const handleRemoveReminder = (id) => {
+    const updated = formData.reminders.filter((r) => r.id !== id);
+    setFormData({ ...formData, reminders: updated });
+  };
+
+  const handleSavePet = (e) => {
+    e.preventDefault();
+    const updatedBoxes = boxes.map((b) => {
+      if (b.id === selectedBox.id) {
+        return { ...b, pet: formData };
+      }
+      return b;
+    });
+    saveBoxes(updatedBoxes);
+    setSelectedBox(null);
+  };
+
+  const handleClearBox = () => {
+    const updatedBoxes = boxes.map((b) => {
+      if (b.id === selectedBox.id) {
+        return { ...b, pet: null };
+      }
+      return b;
+    });
+    saveBoxes(updatedBoxes);
+    setSelectedBox(null);
+  };
+
+  const handleDeleteBox = (e, boxId) => {
+    e.stopPropagation();
+    const updatedBoxes = boxes.filter((b) => b.id !== boxId);
+    saveBoxes(updatedBoxes);
+  };
+
+  const handleAddNewBox = () => {
+    const newId = boxes.length > 0 ? Math.max(...boxes.map((b) => b.id)) + 1 : 1;
+    const newBox = { id: newId, name: `Box ${newId}`, pet: null };
+    saveBoxes([...boxes, newBox]);
+  };
+
+  if (loadingAuth) {
+    return <div className="min-h-screen bg-white flex items-center justify-center font-bold">Loading...</div>;
+  }
+
+  // ==========================================
+  // JAVNI LANDING PAGE (POSERILAC NIJE ULOGOVAN)
+  // ==========================================
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-white text-zinc-900 font-sans">
+        {/* NAV BAR */}
+        <header className="border-b border-zinc-200 py-5 px-8 bg-white sticky top-0 z-30">
+          <div className="max-w-6xl mx-auto flex justify-between items-center">
+            <div className="flex items-center gap-2">
+              <span className="text-2xl font-black tracking-tight">Whimperboard</span>
+            </div>
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => { setIsSignUp(false); setShowAuthModal(true); }}
+                className="text-xs font-bold text-zinc-700 hover:text-black transition"
+              >
+                Log In
+              </button>
+              <button
+                onClick={() => { setIsSignUp(true); setShowAuthModal(true); }}
+                className="bg-lime-400 hover:bg-lime-500 text-black font-black text-xs px-4 py-2.5 rounded-xl border border-lime-500 shadow-sm transition"
+              >
+                Start Free Trial
+              </button>
+            </div>
+          </div>
+        </header>
+
+        {/* HERO SECTION */}
+        <section className="max-w-4xl mx-auto text-center px-6 pt-20 pb-16">
+          <span className="bg-lime-100 border border-lime-300 text-black text-[11px] font-black uppercase tracking-wider px-3 py-1 rounded-full">
+            Designed for Small Pet Boarding Kennels
+          </span>
+          <h1 className="text-5xl sm:text-6xl font-black text-black tracking-tight mt-6 leading-tight">
+            Manage your kennel boxes & care reminders effortlessly.
+          </h1>
+          <p className="text-lg text-zinc-600 mt-6 max-w-2xl mx-auto font-medium">
+            Replace chaotic paper notes and whiteboards. Track pet profiles, dietary needs, and custom medication schedules in one simple mobile dashboard.
+          </p>
+          <div className="mt-10 flex flex-col sm:flex-row justify-center gap-4">
+            <button
+              onClick={() => { setIsSignUp(true); setShowAuthModal(true); }}
+              className="bg-black hover:bg-zinc-800 text-white font-black text-sm px-8 py-4 rounded-2xl shadow-lg transition"
+            >
+              Start 14-Day Free Trial
+            </button>
+          </div>
+        </section>
+
+        {/* SINGLE PRICING CARD SECTION */}
+        <section className="bg-zinc-50 border-y border-zinc-200 py-20 px-6">
+          <div className="max-w-md mx-auto bg-white border-2 border-zinc-900 rounded-3xl p-8 shadow-2xl relative">
+            <div className="absolute -top-4 right-6 bg-lime-400 border border-black font-black text-[10px] uppercase tracking-wider px-3 py-1 rounded-full text-black">
+              All-In-One Plan
+            </div>
+            <h3 className="text-2xl font-black text-black">Standard Pass</h3>
+            <p className="text-xs text-zinc-500 mt-1">Everything your kennel needs to stay organized.</p>
+            
+            <div className="my-6">
+              <span className="text-5xl font-black text-black">€29</span>
+              <span className="text-sm font-bold text-zinc-500"> / month</span>
+            </div>
+
+            <ul className="space-y-3 mb-8 border-t border-b border-zinc-100 py-6 text-xs font-semibold text-zinc-700">
+              <li className="flex items-center gap-2">✓ Unlimited Kennel Boxes</li>
+              <li className="flex items-center gap-2">✓ Custom Medication & Food Alerts</li>
+              <li className="flex items-center gap-2">✓ Mobile App Access (Install on iOS & Android)</li>
+              <li className="flex items-center gap-2">✓ Real-time Cloud Data Sync</li>
+              <li className="flex items-center gap-2">✓ 14-Day Free Trial (Cancel anytime)</li>
+            </ul>
+
+            <button
+              onClick={() => { setIsSignUp(true); setShowAuthModal(true); }}
+              className="w-full bg-lime-400 hover:bg-lime-500 text-black font-black text-sm py-3.5 rounded-xl border border-lime-500 shadow-sm transition"
+            >
+              Get Started – Free for 14 Days
+            </button>
+          </div>
+        </section>
+
+        {/* AUTH MODAL */}
+        {showAuthModal && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+            <div className="bg-white border-2 border-zinc-900 rounded-3xl p-8 max-w-md w-full shadow-2xl relative">
+              <button
+                onClick={() => setShowAuthModal(false)}
+                className="absolute top-5 right-5 text-zinc-400 hover:text-black font-bold text-lg"
+              >
+                ✕
+              </button>
+
+              <div className="text-center mb-6">
+                <h2 className="text-2xl font-black text-black">Whimperboard</h2>
+                <p className="text-xs text-zinc-500 mt-1">
+                  {isSignUp ? 'Create your account to start 14-day trial' : 'Welcome back'}
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleGoogleLogin}
+                className="w-full bg-white hover:bg-zinc-50 text-black font-bold text-xs py-3 px-4 rounded-xl transition border-2 border-zinc-200 flex items-center justify-center gap-2 mb-4 shadow-xs"
+              >
+                <svg className="w-4 h-4" viewBox="0 0 24 24">
+                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
+                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
+                </svg>
+                Continue with Google
+              </button>
+
+              <div className="relative flex py-2 items-center mb-4">
+                <div className="flex-grow border-t border-zinc-200"></div>
+                <span className="flex-shrink mx-4 text-zinc-400 text-[10px] font-bold uppercase tracking-wider">Or email</span>
+                <div className="flex-grow border-t border-zinc-200"></div>
+              </div>
+
+              <form onSubmit={handleAuth} className="space-y-3">
+                <div>
+                  <label className="block text-xs font-bold text-zinc-700 uppercase tracking-wider mb-1">Email</label>
+                  <input
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full bg-zinc-50 border border-zinc-300 rounded-xl px-3 py-2 text-xs text-black focus:outline-none focus:border-black"
+                    placeholder="name@example.com"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-zinc-700 uppercase tracking-wider mb-1">Password</label>
+                  <input
+                    type="password"
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full bg-zinc-50 border border-zinc-300 rounded-xl px-3 py-2 text-xs text-black focus:outline-none focus:border-black"
+                    placeholder="••••••••"
+                  />
+                  {isSignUp && <p className="text-[10px] text-zinc-400 mt-1">Must be at least 8 characters long.</p>}
+                </div>
+
+                {authError && (
+                  <div className="bg-rose-50 border border-rose-200 rounded-xl p-2.5">
+                    <p className="text-xs text-rose-600 font-bold">{authError}</p>
+                  </div>
+                )}
+
+                {authMessage && (
+                  <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-2.5">
+                    <p className="text-xs text-emerald-700 font-bold">{authMessage}</p>
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  className="w-full bg-lime-400 hover:bg-lime-500 text-black font-black text-xs py-3 rounded-xl border border-lime-500 shadow-sm transition mt-2"
+                >
+                  {isSignUp ? 'Start Free Trial' : 'Log In'}
+                </button>
+              </form>
+
+              <div className="text-center mt-4">
+                <button
+                  onClick={() => { setIsSignUp(!isSignUp); setAuthError(''); setAuthMessage(''); }}
+                  className="text-xs font-bold text-zinc-600 hover:text-black underline"
+                >
+                  {isSignUp ? 'Already have an account? Log in' : "Don't have an account? Sign up"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // ==========================================
+  // GLAVNA APLIKACIJA (ULOGOVAN KORISNIK)
+  // ==========================================
+  return (
+    <div className="min-h-screen bg-white text-zinc-900 font-sans pb-12 relative">
+      <header className="bg-lime-400 px-8 py-6 border-b border-lime-500 shadow-sm relative z-20">
+        <div className="max-w-6xl mx-auto flex justify-between items-center">
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => setMenuOpen(!menuOpen)}
+              className="w-10 h-10 bg-black hover:bg-zinc-800 rounded-xl flex flex-col justify-center items-center gap-1.5 p-2 transition shadow-md focus:outline-none"
+              aria-label="Toggle Menu"
+            >
+              <span className={`w-5 h-0.5 bg-white transition-transform duration-300 ${menuOpen ? 'rotate-90 translate-y-2' : ''}`} />
+              <span className={`w-5 h-0.5 bg-white transition-opacity duration-300 ${menuOpen ? 'opacity-0' : 'opacity-100'}`} />
+              <span className={`w-5 h-0.5 bg-white transition-transform duration-300 ${menuOpen ? '-rotate-90 -translate-y-2' : ''}`} />
+            </button>
+
+            <div>
+              <h1 className="text-3xl font-black tracking-tight text-black">Whimperboard</h1>
+              <p className="text-black/80 font-medium text-sm mt-0.5">Kennel & Care Management System</p>
+            </div>
+          </div>
+
+          <button
+            onClick={handleAddNewBox}
+            className="bg-black hover:bg-zinc-800 text-white font-bold text-sm px-4 py-2.5 rounded-xl transition shadow-md"
+          >
+            + Add Box
+          </button>
+        </div>
+      </header>
+
+      {/* DROPDOWN MENU */}
+      {menuOpen && (
+        <div className="absolute top-24 left-8 bg-white border-2 border-zinc-900 rounded-2xl shadow-2xl w-64 py-3 z-30">
+          <div className="px-4 py-2 border-b border-zinc-100">
+            <p className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Account</p>
+            <p className="text-sm font-semibold text-zinc-900 truncate">{user.email}</p>
+          </div>
+
+          <div className="py-1 border-b border-zinc-100">
+            <button
+              onClick={() => { setMenuOpen(false); handleInstallApp(); }}
+              className="w-full text-left px-4 py-2.5 text-sm font-bold text-lime-700 bg-lime-50 hover:bg-lime-100 transition flex items-center justify-between"
+            >
+              <span>Install Mobile App</span>
+              <span className="text-xs font-black">↓</span>
+            </button>
+          </div>
+
+          <div className="py-1">
+            <button
+              onClick={handleLogout}
+              className="w-full text-left px-4 py-2.5 text-sm font-medium text-zinc-700 hover:bg-zinc-100 transition"
+            >
+              Log out
+            </button>
+            <button
+              onClick={() => { setMenuOpen(false); setActiveModal('delete'); }}
+              className="w-full text-left px-4 py-2.5 text-sm font-medium text-rose-600 hover:bg-rose-50 transition"
+            >
+              Delete account
+            </button>
+          </div>
+          <div className="border-t border-zinc-100 py-1">
+            <button
+              onClick={() => { setMenuOpen(false); setActiveModal('privacy'); }}
+              className="w-full text-left px-4 py-2.5 text-sm font-medium text-zinc-700 hover:bg-zinc-100 transition"
+            >
+              Privacy policy
+            </button>
+            <button
+              onClick={() => { setMenuOpen(false); setActiveModal('terms'); }}
+              className="w-full text-left px-4 py-2.5 text-sm font-medium text-zinc-700 hover:bg-zinc-100 transition"
+            >
+              Terms and conditions
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* MAIN GRID */}
+      <main className="max-w-6xl mx-auto px-8 pt-8" onClick={() => menuOpen && setMenuOpen(false)}>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+          {boxes.map((box) => (
+            <div
+              key={box.id}
+              onClick={() => handleOpenModal(box)}
+              className={`relative cursor-pointer rounded-2xl p-6 border-2 transition-all duration-150 hover:shadow-lg ${
+                box.pet ? 'bg-zinc-50 border-zinc-900' : 'bg-white border-zinc-200 hover:border-zinc-400'
+              }`}
+            >
+              <button
+                type="button"
+                onClick={(e) => handleDeleteBox(e, box.id)}
+                title="Remove Box"
+                className="absolute top-4 right-4 w-7 h-7 rounded-full bg-zinc-100 hover:bg-rose-100 text-zinc-500 hover:text-rose-600 flex items-center justify-center font-bold text-xs transition border border-zinc-200"
+              >
+                ✕
+              </button>
+
+              <div className="mb-3">
+                <span className="text-xs font-black uppercase tracking-wider text-zinc-400">
+                  {box.name}
+                </span>
+              </div>
+
+              {box.pet ? (
+                <div>
+                  <h3 className="text-2xl font-black text-black mb-1">{box.pet.dogName}</h3>
+                  {box.pet.breed && (
+                    <p className="text-xs font-semibold text-zinc-500 mb-3">{box.pet.breed}</p>
+                  )}
+
+                  {box.pet.notes && (
+                    <p className="text-xs text-zinc-600 bg-zinc-100 p-2.5 rounded-lg mb-3 border border-zinc-200/80 italic">
+                      "{box.pet.notes}"
+                    </p>
+                  )}
+
+                  {box.pet.reminders && box.pet.reminders.length > 0 && (
+                    <div className="space-y-1.5 mt-3 pt-3 border-t border-zinc-200">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">
+                        Reminders ({box.pet.reminders.length})
+                      </span>
+                      {box.pet.reminders.map((r) => (
+                        <div
+                          key={r.id}
+                          className="bg-lime-100 border border-lime-300 rounded-lg p-2 text-xs text-zinc-900 flex items-center justify-between"
+                        >
+                          <span className="font-medium truncate pr-2">{r.text || 'Reminder'}</span>
+                          <span className="text-[10px] font-bold text-zinc-600 whitespace-nowrap bg-white/80 px-1.5 py-0.5 rounded">
+                            {r.date} {r.time}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="h-28 flex items-center justify-center text-zinc-400 text-sm font-semibold">
+                  + Click to add dog
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </main>
+
+      {/* MODAL FOR DOG & REMINDERS */}
+      {selectedBox && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+          <div className="bg-white border-2 border-zinc-900 w-full max-w-lg rounded-2xl p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+            <button
+              onClick={() => setSelectedBox(null)}
+              className="absolute top-5 right-5 text-zinc-400 hover:text-black font-bold text-lg"
+            >
+              ✕
+            </button>
+
+            <h2 className="text-xl font-black text-black mb-5">
+              {selectedBox.name} – {selectedBox.pet ? 'Edit Details' : 'Add Dog'}
+            </h2>
+
+            <form onSubmit={handleSavePet} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-zinc-700 uppercase tracking-wider mb-1">Dog Name *</label>
+                <input
+                  type="text"
+                  required
+                  value={formData.dogName}
+                  onChange={(e) => setFormData({ ...formData, dogName: e.target.value })}
+                  className="w-full bg-zinc-50 border border-zinc-300 rounded-xl px-3.5 py-2.5 text-sm text-black focus:outline-none focus:border-black"
+                  placeholder="e.g. Max"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-zinc-700 uppercase tracking-wider mb-1">Breed</label>
+                <input
+                  type="text"
+                  value={formData.breed}
+                  onChange={(e) => setFormData({ ...formData, breed: e.target.value })}
+                  className="w-full bg-zinc-50 border border-zinc-300 rounded-xl px-3.5 py-2.5 text-sm text-black focus:outline-none focus:border-black"
+                  placeholder="e.g. Golden Retriever"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-zinc-700 uppercase tracking-wider mb-1">Notes & Special Care</label>
+                <textarea
+                  rows={2}
+                  value={formData.notes}
+                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                  className="w-full bg-zinc-50 border border-zinc-300 rounded-xl px-3.5 py-2.5 text-sm text-black focus:outline-none focus:border-black"
+                  placeholder="e.g. Allergic to chicken..."
+                />
+              </div>
+
+              <div className="bg-lime-50 border border-lime-300 rounded-xl p-4 space-y-3">
+                <div className="flex justify-between items-center">
+                  <label className="text-xs font-black text-black uppercase tracking-wider">Custom Reminders</label>
+                  <button
+                    type="button"
+                    onClick={handleAddReminder}
+                    className="bg-black hover:bg-zinc-800 text-white font-bold text-xs px-3 py-1.5 rounded-lg transition"
+                  >
+                    + Add Reminder
+                  </button>
+                </div>
+
+                {formData.reminders.length === 0 ? (
+                  <p className="text-xs text-zinc-500 italic">No reminders set. Click above to add alerts.</p>
+                ) : (
+                  <div className="space-y-3">
+                    {formData.reminders.map((reminder) => (
+                      <div key={reminder.id} className="bg-white border border-zinc-200 rounded-lg p-3 space-y-2 relative">
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveReminder(reminder.id)}
+                          className="absolute top-2 right-2 text-zinc-400 hover:text-rose-600 text-xs font-bold"
+                        >
+                          ✕
+                        </button>
+                        <input
+                          type="text"
+                          required
+                          value={reminder.text}
+                          onChange={(e) => handleUpdateReminder(reminder.id, 'text', e.target.value)}
+                          className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1.5 text-xs text-black focus:outline-none focus:border-black"
+                          placeholder="What to remind? (e.g. Give insulin)"
+                        />
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <label className="block text-[10px] font-bold text-zinc-500 mb-0.5">Date</label>
+                            <input
+                              type="date"
+                              required
+                              value={reminder.date}
+                              onChange={(e) => handleUpdateReminder(reminder.id, 'date', e.target.value)}
+                              className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-2 py-1 text-xs text-black focus:outline-none focus:border-black"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-bold text-zinc-500 mb-0.5">Time</label>
+                            <input
+                              type="time"
+                              required
+                              value={reminder.time}
+                              onChange={(e) => handleUpdateReminder(reminder.id, 'time', e.target.value)}
+                              className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-2 py-1 text-xs text-black focus:outline-none focus:border-black"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="flex justify-between items-center pt-4 border-t border-zinc-200">
+                {selectedBox.pet ? (
+                  <button
+                    type="button"
+                    onClick={handleClearBox}
+                    className="bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs px-3.5 py-2 rounded-xl transition border border-rose-200"
+                  >
+                    Clear Box / Check-out
+                  </button>
+                ) : <div />}
+
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedBox(null)}
+                    className="bg-zinc-100 hover:bg-zinc-200 text-zinc-700 font-bold text-xs px-4 py-2 rounded-xl transition"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="bg-lime-400 hover:bg-lime-500 text-black font-black text-xs px-5 py-2 rounded-xl transition border border-lime-500 shadow-sm"
+                  >
+                    Save Dog
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {activeModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+          <div className="bg-white border-2 border-zinc-900 w-full max-w-md rounded-2xl p-6 shadow-2xl relative">
+            <button onClick={() => setActiveModal(null)} className="absolute top-5 right-5 text-zinc-400 hover:text-black font-bold text-lg">✕</button>
+            
+            {activeModal === 'privacy' && (
+              <div>
+                <h3 className="text-lg font-black text-black mb-3">Privacy Policy</h3>
+                <p className="text-xs text-zinc-600 leading-relaxed">We respect your privacy. All kennel and pet data entered is securely stored on cloud and never shared with third parties.</p>
+              </div>
+            )}
+
+            {activeModal === 'terms' && (
+              <div>
+                <h3 className="text-lg font-black text-black mb-3">Terms and Conditions</h3>
+                <p className="text-xs text-zinc-600 leading-relaxed">By using Whimperboard, you agree to use the service for managing your pet care facility.</p>
+              </div>
+            )}
+
+            {activeModal === 'delete' && (
+              <div>
+                <h3 className="text-lg font-black text-rose-600 mb-3">Delete Account & Data</h3>
+                <p className="text-xs text-zinc-600 leading-relaxed mb-4">Are you sure you want to delete your account? This action permanently wipes your email, password, pet records, and entire profile from our servers.</p>
+                <div className="flex justify-end gap-2">
+                  <button onClick={() => setActiveModal(null)} className="bg-zinc-100 hover:bg-zinc-200 text-zinc-700 font-bold text-xs px-4 py-2 rounded-xl transition">Cancel</button>
+                  <button onClick={handleDeleteAccount} className="bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs px-4 py-2 rounded-xl transition">Confirm Delete</button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
