@@ -681,6 +681,27 @@ export default function Home() {
                 />
               </div>
 
+              {/* NOVA POLJA: Broj telefona i Datum prijema */}
+              <div>
+                <label className="block text-xs font-bold text-zinc-700 uppercase tracking-wider mb-1">Owner Phone Number</label>
+                <input
+                  type="tel"
+                  value={formData.ownerPhone || ''}
+                  onChange={(e) => setFormData({ ...formData, ownerPhone: e.target.value })}
+                  className="w-full bg-zinc-50 border border-zinc-300 rounded-xl px-3.5 py-2.5 text-sm text-black focus:outline-none focus:border-black"
+                  placeholder="e.g. +49 151 2345678"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-zinc-700 uppercase tracking-wider mb-1">Entry Date</label>
+                <input
+                  type="date"
+                  value={formData.entryDate || ''}
+                  onChange={(e) => setFormData({ ...formData, entryDate: e.target.value })}
+                  className="w-full bg-zinc-50 border border-zinc-300 rounded-xl px-3.5 py-2.5 text-sm text-black focus:outline-none focus:border-black"
+                />
+              </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-zinc-700 uppercase tracking-wider mb-1">Price per Day (€)</label>
