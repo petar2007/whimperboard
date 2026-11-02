@@ -67,15 +67,24 @@ export default function Home() {
   }, []);
 
   const fetchUserBoxes = async (userId) => {
-    const { data } = await supabase
-      .from('user_boxes')
-      .select('boxes_data')
-      .eq('user_id', userId)
-      .single();
+    try {
+      const { data, error } = await supabase
+        .from('user_boxes')
+        .select('boxes_data')
+        .eq('user_id', userId)
+        .maybeSingle(); // Promenjeno u maybeSingle() da ne puca ako red ne postoji!
 
-    if (data && data.boxes_data) {
-      setBoxes(data.boxes_data);
-    } else {
+      if (error) {
+        console.error('Greška pri povlačenju bokseva:', error.message);
+      }
+
+      if (data && data.boxes_data) {
+        setBoxes(data.boxes_data);
+      } else {
+        setBoxes(defaultBoxes);
+      }
+    } catch (err) {
+      console.error('Neočekivana greška:', err);
       setBoxes(defaultBoxes);
     }
   };
@@ -84,21 +93,25 @@ export default function Home() {
     setBoxes(newBoxes);
     if (!user) return;
 
-    const { data } = await supabase
-      .from('user_boxes')
-      .select('id')
-      .eq('user_id', user.id)
-      .single();
+    try {
+      const { data } = await supabase
+        .from('user_boxes')
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
 
-    if (data) {
-      await supabase
-        .from('user_boxes')
-        .update({ boxes_data: newBoxes, updated_at: new Date() })
-        .eq('user_id', user.id);
-    } else {
-      await supabase
-        .from('user_boxes')
-        .insert([{ user_id: user.id, boxes_data: newBoxes }]);
+      if (data) {
+        await supabase
+          .from('user_boxes')
+          .update({ boxes_data: newBoxes, updated_at: new Date() })
+          .eq('user_id', user.id);
+      } else {
+        await supabase
+          .from('user_boxes')
+          .insert([{ user_id: user.id, boxes_data: newBoxes }]);
+      }
+    } catch (err) {
+      console.error('Greška pri čuvanju bokseva:', err);
     }
   };
 
@@ -113,20 +126,26 @@ export default function Home() {
     }
 
     if (isSignUp) {
-      const { error } = await supabase.auth.signUp({ email, password });
+      const { data, error } = await supabase.auth.signUp({ email, password });
       if (error) {
         setAuthError(error.message);
       } else {
-        setAuthMessage('Account created successfully! Logging in...');
+        setAuthMessage('Account created! Auto-logging in...');
+        if (data?.session) {
+          setShowAuthModal(false);
+        }
       }
     } else {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) {
-        setAuthError('Invalid email or password. Please try again.');
+        // Prikazuje pravu grešku ako su mejl ili šifra pogrešni!
+        setAuthError('Invalid email or password. Please check your credentials.');
+      } else if (data?.user) {
+        setShowAuthModal(false);
       }
     }
   };
-
+  
   const handleGoogleLogin = async () => {
     setAuthError('');
     const { error } = await supabase.auth.signInWithOAuth({ provider: 'google' });
