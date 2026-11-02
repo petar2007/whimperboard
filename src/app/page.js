@@ -13,6 +13,7 @@ export default function Home() {
   const [password, setPassword] = useState('');
   const [authError, setAuthError] = useState('');
   const [authMessage, setAuthMessage] = useState('');
+  const [billingCycle, setBillingCycle] = useState('monthly'); // 'monthly' ili 'yearly'
 
   // App state
   const defaultBoxes = [
@@ -29,6 +30,8 @@ export default function Home() {
   const [formData, setFormData] = useState({
     dogName: '',
     breed: '',
+    pricePerDay: '',
+    daysCount: '',
     notes: '',
     reminders: [],
   });
@@ -183,6 +186,8 @@ export default function Home() {
       setFormData({
         dogName: '',
         breed: '',
+        pricePerDay: '',
+        daysCount: '',
         notes: '',
         reminders: [],
       });
@@ -283,7 +288,7 @@ export default function Home() {
             Manage your kennel boxes & care reminders effortlessly.
           </h1>
           <p className="text-lg text-zinc-600 mt-6 max-w-2xl mx-auto font-medium">
-            Replace chaotic paper notes and whiteboards. Track pet profiles, dietary needs, and custom medication schedules in one simple mobile dashboard.
+            Replace chaotic paper notes and whiteboards. Track pet profiles, daily rates, stay costs, and custom medication schedules in one simple mobile dashboard.
           </p>
           <div className="mt-10 flex flex-col sm:flex-row justify-center gap-4">
             <button
@@ -298,18 +303,49 @@ export default function Home() {
         <section className="bg-zinc-50 border-y border-zinc-200 py-20 px-6">
           <div className="max-w-md mx-auto bg-white border-2 border-zinc-900 rounded-3xl p-8 shadow-2xl relative">
             <div className="absolute -top-4 right-6 bg-lime-400 border border-black font-black text-[10px] uppercase tracking-wider px-3 py-1 rounded-full text-black">
-              All-In-One Plan
+              Standard Pass
             </div>
-            <h3 className="text-2xl font-black text-black">Standard Pass</h3>
+            <h3 className="text-2xl font-black text-black">Kennel Pro</h3>
             <p className="text-xs text-zinc-500 mt-1">Everything your kennel needs to stay organized.</p>
             
+            {/* Prekidač za mesečno / godišnje */}
+            <div className="flex bg-zinc-100 p-1 rounded-xl my-6 border border-zinc-200">
+              <button
+                onClick={() => setBillingCycle('monthly')}
+                className={`flex-1 py-2 text-xs font-bold rounded-lg transition ${
+                  billingCycle === 'monthly' ? 'bg-black text-white shadow-sm' : 'text-zinc-600 hover:text-black'
+                }`}
+              >
+                Monthly (€14)
+              </button>
+              <button
+                onClick={() => setBillingCycle('yearly')}
+                className={`flex-1 py-2 text-xs font-bold rounded-lg transition ${
+                  billingCycle === 'yearly' ? 'bg-lime-400 text-black shadow-sm border border-lime-500' : 'text-zinc-600 hover:text-black'
+                }`}
+              >
+                Yearly (€149) ⚡
+              </button>
+            </div>
+
             <div className="my-6">
-              <span className="text-5xl font-black text-black">€29</span>
-              <span className="text-sm font-bold text-zinc-500"> / month</span>
+              {billingCycle === 'monthly' ? (
+                <div>
+                  <span className="text-5xl font-black text-black">€14</span>
+                  <span className="text-sm font-bold text-zinc-500"> / month</span>
+                </div>
+              ) : (
+                <div>
+                  <span className="text-5xl font-black text-black">€149</span>
+                  <span className="text-sm font-bold text-zinc-500"> / year</span>
+                  <p className="text-[11px] font-bold text-emerald-600 mt-1">Save ~€19 compared to monthly billing</p>
+                </div>
+              )}
             </div>
 
             <ul className="space-y-3 mb-8 border-t border-b border-zinc-100 py-6 text-xs font-semibold text-zinc-700">
-              <li className="flex items-center gap-2">✓ Unlimited Kennel Boxes</li>
+              <li className="flex items-center gap-2">✓ Unlimited Kennel Boxes & Dogs</li>
+              <li className="flex items-center gap-2">✓ Automatic Stay Cost Calculation (Days × Rate)</li>
               <li className="flex items-center gap-2">✓ Custom Medication & Food Alerts</li>
               <li className="flex items-center gap-2">✓ Mobile App Access (Install on iOS & Android)</li>
               <li className="flex items-center gap-2">✓ Real-time Cloud Data Sync</li>
@@ -503,68 +539,81 @@ export default function Home() {
 
       <main className="max-w-6xl mx-auto px-8 pt-8" onClick={() => menuOpen && setMenuOpen(false)}>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-          {boxes.map((box) => (
-            <div
-              key={box.id}
-              onClick={() => handleOpenModal(box)}
-              className={`relative cursor-pointer rounded-2xl p-6 border-2 transition-all duration-150 hover:shadow-lg ${
-                box.pet ? 'bg-zinc-50 border-zinc-900' : 'bg-white border-zinc-200 hover:border-zinc-400'
-              }`}
-            >
-              <button
-                type="button"
-                onClick={(e) => handleDeleteBox(e, box.id)}
-                title="Remove Box"
-                className="absolute top-4 right-4 w-7 h-7 rounded-full bg-zinc-100 hover:bg-rose-100 text-zinc-500 hover:text-rose-600 flex items-center justify-center font-bold text-xs transition border border-zinc-200"
+          {boxes.map((box) => {
+            const calculatedTotal = box.pet && box.pet.pricePerDay && box.pet.daysCount 
+              ? Number(box.pet.pricePerDay) * Number(box.pet.daysCount) 
+              : null;
+
+            return (
+              <div
+                key={box.id}
+                onClick={() => handleOpenModal(box)}
+                className={`relative cursor-pointer rounded-2xl p-6 border-2 transition-all duration-150 hover:shadow-lg ${
+                  box.pet ? 'bg-zinc-50 border-zinc-900' : 'bg-white border-zinc-200 hover:border-zinc-400'
+                }`}
               >
-                ✕
-              </button>
+                <button
+                  type="button"
+                  onClick={(e) => handleDeleteBox(e, box.id)}
+                  title="Remove Box"
+                  className="absolute top-4 right-4 w-7 h-7 rounded-full bg-zinc-100 hover:bg-rose-100 text-zinc-500 hover:text-rose-600 flex items-center justify-center font-bold text-xs transition border border-zinc-200"
+                >
+                  ✕
+                </button>
 
-              <div className="mb-3">
-                <span className="text-xs font-black uppercase tracking-wider text-zinc-400">
-                  {box.name}
-                </span>
+                <div className="mb-3">
+                  <span className="text-xs font-black uppercase tracking-wider text-zinc-400">
+                    {box.name}
+                  </span>
+                </div>
+
+                {box.pet ? (
+                  <div>
+                    <h3 className="text-2xl font-black text-black mb-1">{box.pet.dogName}</h3>
+                    {box.pet.breed && (
+                      <p className="text-xs font-semibold text-zinc-500 mb-3">{box.pet.breed}</p>
+                    )}
+
+                    {calculatedTotal !== null && (
+                      <div className="bg-lime-200/70 border border-lime-400 rounded-xl p-2.5 mb-3 flex justify-between items-center">
+                        <span className="text-[11px] font-bold text-zinc-800 uppercase tracking-wider">Total Stay Due:</span>
+                        <span className="text-sm font-black text-black">€{calculatedTotal}</span>
+                      </div>
+                    )}
+
+                    {box.pet.notes && (
+                      <p className="text-xs text-zinc-600 bg-zinc-100 p-2.5 rounded-lg mb-3 border border-zinc-200/80 italic">
+                        "{box.pet.notes}"
+                      </p>
+                    )}
+
+                    {box.pet.reminders && box.pet.reminders.length > 0 && (
+                      <div className="space-y-1.5 mt-3 pt-3 border-t border-zinc-200">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">
+                          Reminders ({box.pet.reminders.length})
+                        </span>
+                        {box.pet.reminders.map((r) => (
+                          <div
+                            key={r.id}
+                            className="bg-lime-100 border border-lime-300 rounded-lg p-2 text-xs text-zinc-900 flex items-center justify-between"
+                          >
+                            <span className="font-medium truncate pr-2">{r.text || 'Reminder'}</span>
+                            <span className="text-[10px] font-bold text-zinc-600 whitespace-nowrap bg-white/80 px-1.5 py-0.5 rounded">
+                              {r.date} {r.time}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="h-28 flex items-center justify-center text-zinc-400 text-sm font-semibold">
+                    + Click to add dog
+                  </div>
+                )}
               </div>
-
-              {box.pet ? (
-                <div>
-                  <h3 className="text-2xl font-black text-black mb-1">{box.pet.dogName}</h3>
-                  {box.pet.breed && (
-                    <p className="text-xs font-semibold text-zinc-500 mb-3">{box.pet.breed}</p>
-                  )}
-
-                  {box.pet.notes && (
-                    <p className="text-xs text-zinc-600 bg-zinc-100 p-2.5 rounded-lg mb-3 border border-zinc-200/80 italic">
-                      "{box.pet.notes}"
-                    </p>
-                  )}
-
-                  {box.pet.reminders && box.pet.reminders.length > 0 && (
-                    <div className="space-y-1.5 mt-3 pt-3 border-t border-zinc-200">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">
-                        Reminders ({box.pet.reminders.length})
-                      </span>
-                      {box.pet.reminders.map((r) => (
-                        <div
-                          key={r.id}
-                          className="bg-lime-100 border border-lime-300 rounded-lg p-2 text-xs text-zinc-900 flex items-center justify-between"
-                        >
-                          <span className="font-medium truncate pr-2">{r.text || 'Reminder'}</span>
-                          <span className="text-[10px] font-bold text-zinc-600 whitespace-nowrap bg-white/80 px-1.5 py-0.5 rounded">
-                            {r.date} {r.time}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="h-28 flex items-center justify-center text-zinc-400 text-sm font-semibold">
-                  + Click to add dog
-                </div>
-              )}
-            </div>
-          ))}
+            );
+          })}
         </div>
       </main>
 
@@ -604,6 +653,30 @@ export default function Home() {
                   className="w-full bg-zinc-50 border border-zinc-300 rounded-xl px-3.5 py-2.5 text-sm text-black focus:outline-none focus:border-black"
                   placeholder="e.g. Golden Retriever"
                 />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-zinc-700 uppercase tracking-wider mb-1">Price per Day (€)</label>
+                  <input
+                    type="number"
+                    step="0.5"
+                    value={formData.pricePerDay}
+                    onChange={(e) => setFormData({ ...formData, pricePerDay: e.target.value })}
+                    className="w-full bg-zinc-50 border border-zinc-300 rounded-xl px-3.5 py-2.5 text-sm text-black focus:outline-none focus:border-black"
+                    placeholder="e.g. 15"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-zinc-700 uppercase tracking-wider mb-1">Number of Days</label>
+                  <input
+                    type="number"
+                    value={formData.daysCount}
+                    onChange={(e) => setFormData({ ...formData, daysCount: e.target.value })}
+                    className="w-full bg-zinc-50 border border-zinc-300 rounded-xl px-3.5 py-2.5 text-sm text-black focus:outline-none focus:border-black"
+                    placeholder="e.g. 7"
+                  />
+                </div>
               </div>
 
               <div>
