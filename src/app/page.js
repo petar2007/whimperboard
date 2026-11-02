@@ -145,7 +145,7 @@ export default function Home() {
       }
     }
   };
-  
+
   const handleGoogleLogin = async () => {
     setAuthError('');
     const { error } = await supabase.auth.signInWithOAuth({ provider: 'google' });
@@ -197,6 +197,11 @@ export default function Home() {
     }
   };
 
+ const copyToClipboard = (text) => {
+    navigator.clipboard.writeText(text);
+    alert('Owner phone number copied to clipboard!');
+  };
+
   const handleOpenModal = (box) => {
     setSelectedBox(box);
     if (box.pet) {
@@ -205,6 +210,8 @@ export default function Home() {
       setFormData({
         dogName: '',
         breed: '',
+        ownerPhone: '', // Dodato polje za telefon vlasnika
+        entryDate: new Date().toISOString().split('T')[0], // Automatski današnji datum (YYYY-MM-DD)
         pricePerDay: '',
         daysCount: '',
         notes: '',
