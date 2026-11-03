@@ -75,7 +75,7 @@ export default function Home() {
         .maybeSingle(); // Promenjeno u maybeSingle() da ne puca ako red ne postoji!
 
       if (error) {
-        console.error('Greška pri povlačenju bokseva:', error.message);
+        console.error(':error while drawing boxes', error.message);
       }
 
       if (data && data.boxes_data) {
@@ -84,7 +84,7 @@ export default function Home() {
         setBoxes(defaultBoxes);
       }
     } catch (err) {
-      console.error('Neočekivana greška:', err);
+      console.error('Error while withdrawing boxes:', err);
       setBoxes(defaultBoxes);
     }
   };
@@ -111,7 +111,7 @@ export default function Home() {
           .insert([{ user_id: user.id, boxes_data: newBoxes }]);
       }
     } catch (err) {
-      console.error('Greška pri čuvanju bokseva:', err);
+      console.error('Error while saving boxes:', err);
     }
   };
 
@@ -547,18 +547,20 @@ const copyToClipboard = (text) => {
             </button>
           </div>
           <div className="border-t border-zinc-100 py-1">
-            <button
-              onClick={() => { setMenuOpen(false); setActiveModal('privacy'); }}
-              className="w-full text-left px-4 py-2.5 text-sm font-medium text-zinc-700 hover:bg-zinc-100 transition"
+            <Link
+              href="/privacy"
+              onClick={() => setMenuOpen(false)}
+              className="block w-full text-left px-4 py-2.5 text-sm font-medium text-zinc-700 hover:bg-zinc-100 transition"
             >
               Privacy policy
-            </button>
-            <button
-              onClick={() => { setMenuOpen(false); setActiveModal('terms'); }}
-              className="w-full text-left px-4 py-2.5 text-sm font-medium text-zinc-700 hover:bg-zinc-100 transition"
+            </Link>
+            <Link
+              href="/terms"
+              onClick={() => setMenuOpen(false)}
+              className="block w-full text-left px-4 py-2.5 text-sm font-medium text-zinc-700 hover:bg-zinc-100 transition"
             >
               Terms and conditions
-            </button>
+            </Link>
           </div>
         </div>
       )}
