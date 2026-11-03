@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 
 export default function Home() {
@@ -72,10 +73,10 @@ export default function Home() {
         .from('user_boxes')
         .select('boxes_data')
         .eq('user_id', userId)
-        .maybeSingle(); // Promenjeno u maybeSingle() da ne puca ako red ne postoji!
+        .maybeSingle();
 
       if (error) {
-        console.error(':error while drawing boxes', error.message);
+        console.error('error while drawing boxes', error.message);
       }
 
       if (data && data.boxes_data) {
@@ -138,7 +139,6 @@ export default function Home() {
     } else {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) {
-        // Prikazuje pravu grešku ako su mejl ili šifra pogrešni!
         setAuthError('Invalid email or password. Please check your credentials.');
       } else if (data?.user) {
         setShowAuthModal(false);
@@ -197,7 +197,7 @@ export default function Home() {
     }
   };
 
-const copyToClipboard = (text) => {
+  const copyToClipboard = (text) => {
     navigator.clipboard.writeText(text);
     alert('Owner phone number copied to clipboard!');
   };
@@ -334,7 +334,6 @@ const copyToClipboard = (text) => {
             <h3 className="text-2xl font-black text-black">Kennel Pro</h3>
             <p className="text-xs text-zinc-500 mt-1">Everything your kennel needs to stay organized.</p>
             
-            {/* Prekidač za mesečno / godišnje */}
             <div className="flex bg-zinc-100 p-1 rounded-xl my-6 border border-zinc-200">
               <button
                 onClick={() => setBillingCycle('monthly')}
@@ -565,7 +564,8 @@ const copyToClipboard = (text) => {
         </div>
       )}
 
-      <main className="max-w-6xl mx-auto px-8 pt-8" onClick={() => menuOpen && setMenuOpen(false)}>
+      {/* Sklonjen problematičan onClick sa main taga da bi meni normalno radio */}
+      <main className="max-w-6xl mx-auto px-8 pt-8">
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
           {boxes.map((box) => {
             const calculatedTotal = box.pet && box.pet.pricePerDay && box.pet.daysCount 
@@ -602,7 +602,6 @@ const copyToClipboard = (text) => {
                       <p className="text-xs font-semibold text-zinc-500 mb-2">{box.pet.breed}</p>
                     )}
 
-                    {/* NOVA SEKCIJA: Broj telefona sa Copy dugmetom (dva papira ikonica) */}
                     {box.pet.ownerPhone && (
                       <div className="flex items-center justify-between bg-white border border-zinc-200 rounded-xl px-3 py-2 mb-3 shadow-xs" onClick={(e) => e.stopPropagation()}>
                         <span className="text-xs font-bold text-zinc-700">📞 {box.pet.ownerPhone}</span>
@@ -612,7 +611,6 @@ const copyToClipboard = (text) => {
                           className="flex items-center gap-1 text-[11px] font-bold text-zinc-600 bg-zinc-100 hover:bg-zinc-200 px-2 py-1 rounded-lg transition"
                           title="Copy phone number"
                         >
-                          {/* Standardna ikonica dva papira */}
                           <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                           </svg>
@@ -621,7 +619,6 @@ const copyToClipboard = (text) => {
                       </div>
                     )}
 
-                    {/* NOVA SEKCIJA: Datum prijema */}
                     {box.pet.entryDate && (
                       <p className="text-[11px] font-semibold text-zinc-500 mb-3">
                         📅 Entered: <span className="text-zinc-800">{box.pet.entryDate}</span>
@@ -637,7 +634,7 @@ const copyToClipboard = (text) => {
 
                     {box.pet.notes && (
                       <p className="text-xs text-zinc-600 bg-zinc-100 p-2.5 rounded-lg mb-3 border border-zinc-200/80 italic">
-                        "{box.pet.notes}"
+                        &quot;{box.pet.notes}&quot;
                       </p>
                     )}
 
@@ -709,7 +706,6 @@ const copyToClipboard = (text) => {
                 />
               </div>
 
-              {/* NOVA POLJA: Broj telefona i Datum prijema */}
               <div>
                 <label className="block text-xs font-bold text-zinc-700 uppercase tracking-wider mb-1">Owner Phone Number</label>
                 <input
@@ -863,20 +859,6 @@ const copyToClipboard = (text) => {
           <div className="bg-white border-2 border-zinc-900 w-full max-w-md rounded-2xl p-6 shadow-2xl relative">
             <button onClick={() => setActiveModal(null)} className="absolute top-5 right-5 text-zinc-400 hover:text-black font-bold text-lg">✕</button>
             
-            {activeModal === 'privacy' && (
-              <div>
-                <h3 className="text-lg font-black text-black mb-3">Privacy Policy</h3>
-                <p className="text-xs text-zinc-600 leading-relaxed">We respect your privacy. All kennel and pet data entered is securely stored on cloud and never shared with third parties.</p>
-              </div>
-            )}
-
-            {activeModal === 'terms' && (
-              <div>
-                <h3 className="text-lg font-black text-black mb-3">Terms and Conditions</h3>
-                <p className="text-xs text-zinc-600 leading-relaxed">By using Whimperboard, you agree to use the service for managing your pet care facility.</p>
-              </div>
-            )}
-
             {activeModal === 'delete' && (
               <div>
                 <h3 className="text-lg font-black text-rose-600 mb-3">Delete Account & Data</h3>
