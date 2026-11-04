@@ -2,16 +2,19 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import nodemailer from 'nodemailer';
 
-// Inicijalizujemo Supabase admin klijent (za rad sa bazom iz API-ja)
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY // Moraš imati ovaj ključ u .env.local
-);
-
 export async function GET(request) {
   try {
+    // Inicijalizujemo Supabase admin klijent unutar funkcije
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    if (!supabaseUrl || !serviceKey) {
+      return NextResponse.json({ success: false, error: 'Missing Supabase environment variables' }, { status: 500 });
+    }
+
+    const supabaseAdmin = createClient(supabaseUrl, serviceKey);
+
     const now = new Date();
-    // Možeš prilagoditi format datuma i vremena u zavisnosti kako ih čuvaš
     const currentDate = now.toISOString().split('T')[0]; // Format YYYY-MM-DD
     const currentTime = now.toTimeString().slice(0, 5); // Format HH:MM
 
@@ -40,13 +43,11 @@ export async function GET(request) {
       for (const box of boxes) {
         if (box.pet && box.pet.reminders) {
           for (const reminder of box.pet.reminders) {
-            // Proveravamo da li je vreme podsetnika stiglo, a da mejl još nije poslat
             if (
               reminder.date === currentDate &&
               reminder.time === currentTime &&
               !reminder.sent
             ) {
-              // Šaljemo mejl
               const mailOptions = {
                 from: process.env.EMAIL_USER,
                 to: process.env.EMAIL_USER,
@@ -65,7 +66,6 @@ export async function GET(request) {
 
               await transporter.sendMail(mailOptions);
               
-              // Obeležavamo ovaj podsetnik da je poslat da ga ne šaljemo ponovo
               reminder.sent = true;
               updated = true;
               emailsSent++;
@@ -74,7 +74,6 @@ export async function GET(request) {
         }
       }
 
-      // 3. Ako je neki podsetnik označen kao poslat, ažuriramo bazu
       if (updated) {
         await supabaseAdmin
           .from('user_boxes')
