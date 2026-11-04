@@ -2,21 +2,21 @@ import Link from 'next/link';
 
 export default function TermsPage() {
   return (
-    <main className="min-h-screen bg-slate-900 text-slate-100 p-6 md:p-12">
-      <div className="max-w-4xl mx-auto bg-slate-800 p-8 rounded-xl border border-slate-700 shadow-xl space-y-8">
+    <main className="min-h-screen bg-white text-zinc-900 p-6 md:p-12">
+      <div className="max-w-4xl mx-auto bg-white p-8 rounded-xl border border-zinc-200 shadow-xl space-y-8">
         
         <Link 
           href="/" 
-          className="inline-block text-sm text-emerald-400 hover:underline font-medium"
+          className="inline-block text-sm text-emerald-600 hover:underline font-bold"
         >
           ← Back to App
         </Link>
         
         <div>
-          <h1 className="text-3xl font-bold text-white mb-2">Terms of Service</h1>
+          <h1 className="text-3xl font-black text-black mb-2">Terms of Service</h1>
         </div>
 
-        <div className="prose prose-invert max-w-none text-slate-300 space-y-4">
+        <div className="text-zinc-700 text-sm space-y-4 leading-relaxed">
           
           TERMS OF SERVICE
 Last updated November 03, 2026
