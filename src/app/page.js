@@ -171,25 +171,30 @@ export default function Home() {
   const handleDeleteAccount = async () => {
     if (!user) return;
 
+    const userIdToDelete = user.id;
+
     try {
+      // 1. Prvo potpuno odjavimo korisnika i očistimo lokalne podatke
+      await supabase.auth.signOut();
+      setUser(null);
+      setBoxes(defaultBoxes);
+      setActiveModal(null);
+
+      // 2. Zatim pošaljemo zahtev serveru da obriše nalog iz baze
       const response = await fetch('/api/delete-user', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: user.id }),
+        body: JSON.stringify({ userId: userIdToDelete }),
       });
 
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || 'Failed to delete account');
 
-      await supabase.auth.signOut();
-      setUser(null);
-      setActiveModal(null);
-      setBoxes(defaultBoxes);
       alert('Your account and all associated data have been completely deleted.');
+      window.location.href = '/';
     } catch (err) {
       console.error(err);
-      setAuthError('Failed to delete account completely.');
-      setActiveModal(null);
+      window.location.href = '/';
     }
   };
 
