@@ -12,9 +12,10 @@ export default function Home() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [acceptedTerms, setAcceptedTerms] = useState(false); // Checkbox state
   const [authError, setAuthError] = useState('');
   const [authMessage, setAuthMessage] = useState('');
-  const [billingCycle, setBillingCycle] = useState('monthly'); // 'monthly' ili 'yearly'
+  const [billingCycle, setBillingCycle] = useState('monthly');
 
   // App state
   const defaultBoxes = [
@@ -121,6 +122,11 @@ export default function Home() {
     setAuthError('');
     setAuthMessage('');
 
+    if (isSignUp && !acceptedTerms) {
+      setAuthError('You must accept the Terms of Service and Privacy Policy.');
+      return;
+    }
+
     if (isSignUp && password.length < 8) {
       setAuthError('Password must be at least 8 characters long.');
       return;
@@ -147,6 +153,10 @@ export default function Home() {
   };
 
   const handleGoogleLogin = async () => {
+    if (isSignUp && !acceptedTerms) {
+      setAuthError('You must accept the Terms of Service and Privacy Policy.');
+      return;
+    }
     setAuthError('');
     const { error } = await supabase.auth.signInWithOAuth({ provider: 'google' });
     if (error) setAuthError(error.message);
@@ -291,13 +301,13 @@ export default function Home() {
             </div>
             <div className="flex items-center gap-4">
               <button
-                onClick={() => { setIsSignUp(false); setShowAuthModal(true); }}
+                onClick={() => { setIsSignUp(false); setShowAuthModal(true); setAuthError(''); }}
                 className="text-xs font-bold text-zinc-700 hover:text-black transition"
               >
                 Log In
               </button>
               <button
-                onClick={() => { setIsSignUp(true); setShowAuthModal(true); }}
+                onClick={() => { setIsSignUp(true); setShowAuthModal(true); setAuthError(''); }}
                 className="bg-lime-400 hover:bg-lime-500 text-black font-black text-xs px-4 py-2.5 rounded-xl border border-lime-500 shadow-sm transition"
               >
                 Start Free Trial
@@ -318,7 +328,7 @@ export default function Home() {
           </p>
           <div className="mt-10 flex flex-col sm:flex-row justify-center gap-4">
             <button
-              onClick={() => { setIsSignUp(true); setShowAuthModal(true); }}
+              onClick={() => { setIsSignUp(true); setShowAuthModal(true); setAuthError(''); }}
               className="bg-black hover:bg-zinc-800 text-white font-black text-sm px-8 py-4 rounded-2xl shadow-lg transition"
             >
               Start 14-Day Free Trial
@@ -378,7 +388,7 @@ export default function Home() {
             </ul>
 
             <button
-              onClick={() => { setIsSignUp(true); setShowAuthModal(true); }}
+              onClick={() => { setIsSignUp(true); setShowAuthModal(true); setAuthError(''); }}
               className="w-full bg-lime-400 hover:bg-lime-500 text-black font-black text-sm py-3.5 rounded-xl border border-lime-500 shadow-sm transition"
             >
               Get Started – Free for 14 Days
@@ -403,10 +413,39 @@ export default function Home() {
                 </p>
               </div>
 
+              {/* CHECKBOX SELEKCIJA ZA RECI DOK JE SIGNUP MODAL */}
+              {isSignUp && (
+                <div className="mb-4 p-3 bg-zinc-50 border border-zinc-200 rounded-xl">
+                  <label className="flex items-start gap-2.5 cursor-pointer text-left">
+                    <input
+                      type="checkbox"
+                      checked={acceptedTerms}
+                      onChange={(e) => setAcceptedTerms(e.target.checked)}
+                      className="mt-0.5 h-4 w-4 rounded border-zinc-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer accent-emerald-600"
+                    />
+                    <span className="text-xs text-zinc-600 leading-snug">
+                      I agree to the{' '}
+                      <Link href="/terms" target="_blank" className="text-emerald-600 font-bold hover:underline">
+                        Terms of Service
+                      </Link>{' '}
+                      and{' '}
+                      <Link href="/privacy" target="_blank" className="text-emerald-600 font-bold hover:underline">
+                        Privacy Policy
+                      </Link>.
+                    </span>
+                  </label>
+                </div>
+              )}
+
               <button
                 type="button"
                 onClick={handleGoogleLogin}
-                className="w-full bg-white hover:bg-zinc-50 text-black font-bold text-xs py-3 px-4 rounded-xl transition border-2 border-zinc-200 flex items-center justify-center gap-2 mb-4 shadow-xs"
+                disabled={isSignUp && !acceptedTerms}
+                className={`w-full font-bold text-xs py-3 px-4 rounded-xl transition border-2 flex items-center justify-center gap-2 mb-4 shadow-xs ${
+                  isSignUp && !acceptedTerms
+                    ? 'bg-zinc-100 text-zinc-400 border-zinc-200 cursor-not-allowed opacity-60'
+                    : 'bg-white hover:bg-zinc-50 text-black border-zinc-200'
+                }`}
               >
                 <svg className="w-4 h-4" viewBox="0 0 24 24">
                   <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -463,7 +502,12 @@ export default function Home() {
 
                 <button
                   type="submit"
-                  className="w-full bg-lime-400 hover:bg-lime-500 text-black font-black text-xs py-3 rounded-xl border border-lime-500 shadow-sm transition mt-2"
+                  disabled={isSignUp && !acceptedTerms}
+                  className={`w-full font-black text-xs py-3 rounded-xl border shadow-sm transition mt-2 ${
+                    isSignUp && !acceptedTerms
+                      ? 'bg-zinc-200 text-zinc-400 border-zinc-300 cursor-not-allowed'
+                      : 'bg-lime-400 hover:bg-lime-500 text-black border-lime-500'
+                  }`}
                 >
                   {isSignUp ? 'Start Free Trial' : 'Log In'}
                 </button>
@@ -564,7 +608,6 @@ export default function Home() {
         </div>
       )}
 
-      {/* Sklonjen problematičan onClick sa main taga da bi meni normalno radio */}
       <main className="max-w-6xl mx-auto px-8 pt-8">
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
           {boxes.map((box) => {
