@@ -18,13 +18,24 @@ export default function Home() {
   const [billingCycle, setBillingCycle] = useState('monthly');
 
   // App state
+  const defaultTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+  const timeZoneOptions = [
+    ...new Set([
+      defaultTimeZone,
+      'UTC',
+      ...(typeof Intl.supportedValuesOf === 'function'
+        ? Intl.supportedValuesOf('timeZone')
+        : []),
+    ]),
+  ].sort();
+
   const defaultBoxes = [
-    { id: 1, name: 'Box 1', pet: null },
-    { id: 2, name: 'Box 2', pet: null },
-    { id: 3, name: 'Box 3', pet: null },
-    { id: 4, name: 'Box 4', pet: null },
-    { id: 5, name: 'Box 5', pet: null },
-    { id: 6, name: 'Box 6', pet: null },
+    { id: 1, name: 'Box 1', pet: null, timeZone: defaultTimeZone },
+    { id: 2, name: 'Box 2', pet: null, timeZone: defaultTimeZone },
+    { id: 3, name: 'Box 3', pet: null, timeZone: defaultTimeZone },
+    { id: 4, name: 'Box 4', pet: null, timeZone: defaultTimeZone },
+    { id: 5, name: 'Box 5', pet: null, timeZone: defaultTimeZone },
+    { id: 6, name: 'Box 6', pet: null, timeZone: defaultTimeZone },
   ];
 
   const [boxes, setBoxes] = useState(defaultBoxes);
@@ -280,6 +291,17 @@ export default function Home() {
     setSelectedBox(null);
   };
 
+  const handleUpdateTimeZone = (timeZone) => {
+    const firstBoxId = boxes[0]?.id;
+    if (selectedBox?.id !== firstBoxId) return;
+
+    const updatedBoxes = boxes.map((box) =>
+      box.id === firstBoxId ? { ...box, timeZone } : box
+    );
+    setSelectedBox({ ...selectedBox, timeZone });
+    saveBoxes(updatedBoxes);
+  };
+
   const handleDeleteBox = (e, boxId) => {
     e.stopPropagation();
     const updatedBoxes = boxes.filter((b) => b.id !== boxId);
@@ -288,7 +310,12 @@ export default function Home() {
 
   const handleAddNewBox = () => {
     const newId = boxes.length > 0 ? Math.max(...boxes.map((b) => b.id)) + 1 : 1;
-    const newBox = { id: newId, name: `Box ${newId}`, pet: null };
+    const newBox = {
+      id: newId,
+      name: `Box ${newId}`,
+      pet: null,
+      timeZone: boxes[0]?.timeZone || defaultTimeZone,
+    };
     saveBoxes([...boxes, newBox]);
   };
 
@@ -729,6 +756,26 @@ export default function Home() {
             <h2 className="text-xl font-black text-black mb-5">
               {selectedBox.name} – {selectedBox.pet ? 'Edit Details' : 'Add Dog'}
             </h2>
+
+            {selectedBox.id === boxes[0]?.id && (
+              <div className="mb-4">
+                <label className="block text-xs font-bold text-zinc-700 uppercase tracking-wider mb-1">
+                  Default Time Zone for New Boxes
+                </label>
+                <select
+                  value={selectedBox.timeZone || defaultTimeZone}
+                  onChange={(e) => handleUpdateTimeZone(e.target.value)}
+                  className="w-full bg-zinc-50 border border-zinc-300 rounded-xl px-3.5 py-2.5 text-sm text-black focus:outline-none focus:border-black"
+                >
+                  {timeZoneOptions.map((timeZone) => (
+                    <option key={timeZone} value={timeZone}>{timeZone}</option>
+                  ))}
+                </select>
+                <p className="mt-1 text-xs text-zinc-500">
+                  New boxes will use this time zone.
+                </p>
+              </div>
+            )}
 
             <form onSubmit={handleSavePet} className="space-y-4">
               <div>
