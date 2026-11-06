@@ -3,8 +3,13 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 
+// Zameni sa tvojim pravim Variant ID brojevima sa Lemon Squeezy-ja (7 cifara)
+const MONTHLY_VARIANT_ID = "TVOJ_MESECNI_VARIANT_ID"; 
+const ANNUAL_VARIANT_ID = "TVOJ_GODISNJI_VARIANT_ID";
+
 export default function Home() {
   const [user, setUser] = useState(null);
+  const [isPro, setIsPro] = useState(false);
   const [loadingAuth, setLoadingAuth] = useState(true);
   
   // Auth forme state
@@ -12,7 +17,7 @@ export default function Home() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [acceptedTerms, setAcceptedTerms] = useState(false); // Checkbox state
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [authError, setAuthError] = useState('');
   const [authMessage, setAuthMessage] = useState('');
   const [billingCycle, setBillingCycle] = useState('monthly');
@@ -55,19 +60,24 @@ export default function Home() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        fetchUserBoxes(session.user.id);
+      const currentUser = session?.user ?? null;
+      setUser(currentUser);
+      if (currentUser) {
+        fetchUserData(currentUser.id);
+      } else {
+        setLoadingAuth(false);
       }
-      setLoadingAuth(false);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        fetchUserBoxes(session.user.id);
+      const currentUser = session?.user ?? null;
+      setUser(currentUser);
+      if (currentUser) {
+        fetchUserData(currentUser.id);
       } else {
         setBoxes(defaultBoxes);
+        setIsPro(false);
+        setLoadingAuth(false);
       }
     });
 
@@ -79,26 +89,31 @@ export default function Home() {
     return () => subscription.unsubscribe();
   }, []);
 
-  const fetchUserBoxes = async (userId) => {
+  const fetchUserData = async (userId) => {
     try {
       const { data, error } = await supabase
         .from('user_boxes')
-        .select('boxes_data')
+        .select('boxes_data, is_pro')
         .eq('user_id', userId)
         .maybeSingle();
 
       if (error) {
-        console.error('error while drawing boxes', error.message);
+        console.error('Error fetching user data:', error.message);
       }
 
-      if (data && data.boxes_data) {
-        setBoxes(data.boxes_data);
+      if (data) {
+        if (data.boxes_data) setBoxes(data.boxes_data);
+        setIsPro(Boolean(data.is_pro));
       } else {
         setBoxes(defaultBoxes);
+        setIsPro(false);
       }
     } catch (err) {
-      console.error('Error while withdrawing boxes:', err);
+      console.error('Error while withdrawing user data:', err);
       setBoxes(defaultBoxes);
+      setIsPro(false);
+    } finally {
+      setLoadingAuth(false);
     }
   };
 
@@ -121,7 +136,7 @@ export default function Home() {
       } else {
         await supabase
           .from('user_boxes')
-          .insert([{ user_id: user.id, boxes_data: newBoxes }]);
+          .insert([{ user_id: user.id, boxes_data: newBoxes, is_pro: isPro }]);
       }
     } catch (err) {
       console.error('Error while saving boxes:', err);
@@ -148,7 +163,7 @@ export default function Home() {
       if (error) {
         setAuthError(error.message);
       } else {
-        setAuthMessage('Account created! Auto-logging in...');
+        setAuthMessage('Account created! Logging in...');
         if (data?.session) {
           setShowAuthModal(false);
         }
@@ -176,6 +191,7 @@ export default function Home() {
   const handleLogout = async () => {
     await supabase.auth.signOut();
     setBoxes(defaultBoxes);
+    setIsPro(false);
     setMenuOpen(false);
   };
 
@@ -185,13 +201,12 @@ export default function Home() {
     const userIdToDelete = user.id;
 
     try {
-      // 1. Prvo potpuno odjavimo korisnika i očistimo lokalne podatke
       await supabase.auth.signOut();
       setUser(null);
       setBoxes(defaultBoxes);
+      setIsPro(false);
       setActiveModal(null);
 
-      // 2. Zatim pošaljemo zahtev serveru da obriše nalog iz baze
       const response = await fetch('/api/delete-user', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -319,10 +334,18 @@ export default function Home() {
     saveBoxes([...boxes, newBox]);
   };
 
+  // Sastavljanje dinamičkog checkout URL-a za Lemon Squeezy
+  const selectedVariantId = billingCycle === 'yearly' ? ANNUAL_VARIANT_ID : MONTHLY_VARIANT_ID;
+  const getCheckoutUrl = () => {
+    if (!user) return '#';
+    return `https://whimperboard.lemonsqueezy.com/checkout/buy/${selectedVariantId}?checkout[custom][user_id]=${user.id}`;
+  };
+
   if (loadingAuth) {
     return <div className="min-h-screen bg-white flex items-center justify-center font-bold">Loading...</div>;
   }
 
+  // 1. NEULOGOVANI KORISNIK (Landing Page)
   if (!user) {
     return (
       <div className="min-h-screen bg-white text-zinc-900 font-sans">
@@ -445,7 +468,6 @@ export default function Home() {
                 </p>
               </div>
 
-              {/* CHECKBOX SELEKCIJA ZA RECI DOK JE SIGNUP MODAL */}
               {isSignUp && (
                 <div className="mb-4 p-3 bg-zinc-50 border border-zinc-200 rounded-xl">
                   <label className="flex items-start gap-2.5 cursor-pointer text-left">
@@ -560,6 +582,86 @@ export default function Home() {
     );
   }
 
+  // 2. ULOGOVAN KORISNIK KOJI NEMA AKTIVNU PRETPLATU (Paywall Gate)
+  if (!isPro) {
+    return (
+      <div className="min-h-screen bg-zinc-50 text-zinc-900 font-sans flex flex-col justify-center items-center px-6 py-12">
+        <div className="max-w-md w-full bg-white border-2 border-zinc-900 rounded-3xl p-8 shadow-2xl relative text-center">
+          <div className="mb-4">
+            <span className="bg-rose-100 border border-rose-300 text-rose-800 text-[11px] font-black uppercase tracking-wider px-3 py-1 rounded-full">
+              Subscription Required
+            </span>
+          </div>
+          
+          <h2 className="text-3xl font-black text-black">Start Your 14-Day Free Trial</h2>
+          <p className="text-xs text-zinc-500 mt-2">
+            Enter your card details to activate access. You won’t be charged during the trial and can cancel anytime.
+          </p>
+
+          <div className="flex bg-zinc-100 p-1 rounded-xl my-6 border border-zinc-200">
+            <button
+              onClick={() => setBillingCycle('monthly')}
+              className={`flex-1 py-2 text-xs font-bold rounded-lg transition ${
+                billingCycle === 'monthly' ? 'bg-black text-white shadow-sm' : 'text-zinc-600 hover:text-black'
+              }`}
+            >
+              Monthly (€14)
+            </button>
+            <button
+              onClick={() => setBillingCycle('yearly')}
+              className={`flex-1 py-2 text-xs font-bold rounded-lg transition ${
+                billingCycle === 'yearly' ? 'bg-lime-400 text-black shadow-sm border border-lime-500' : 'text-zinc-600 hover:text-black'
+              }`}
+            >
+              Yearly (€149) ⚡
+            </button>
+          </div>
+
+          <div className="my-6">
+            {billingCycle === 'monthly' ? (
+              <div>
+                <span className="text-5xl font-black text-black">€14</span>
+                <span className="text-sm font-bold text-zinc-500"> / month</span>
+              </div>
+            ) : (
+              <div>
+                <span className="text-5xl font-black text-black">€149</span>
+                <span className="text-sm font-bold text-zinc-500"> / year</span>
+                <p className="text-[11px] font-bold text-emerald-600 mt-1">Save ~€19 compared to monthly billing</p>
+              </div>
+            )}
+          </div>
+
+          <ul className="space-y-2 mb-8 border-t border-b border-zinc-100 py-6 text-xs font-semibold text-zinc-700 text-left">
+            <li className="flex items-center gap-2">✓ Full Access to All Kennel Features</li>
+            <li className="flex items-center gap-2">✓ 14 Days Free – No Charge Today</li>
+            <li className="flex items-center gap-2">✓ Cancel Anytime With 1 Click</li>
+          </ul>
+
+          <a
+            href={getCheckoutUrl()}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block w-full bg-lime-400 hover:bg-lime-500 text-black font-black text-sm py-4 rounded-xl border border-lime-500 shadow-md transition text-center"
+          >
+            Enter Card & Start Trial
+          </a>
+
+          <div className="mt-6 pt-4 border-t border-zinc-100 flex justify-between items-center text-xs">
+            <span className="text-zinc-500 truncate max-w-[180px]">{user.email}</span>
+            <button
+              onClick={handleLogout}
+              className="text-zinc-700 hover:text-black font-bold underline"
+            >
+              Log out
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // 3. ULOGOVAN KORISNIK SA AKTIVNOM PRETPOLATOM (Glavni Dashboard)
   return (
     <div className="min-h-screen bg-white text-zinc-900 font-sans pb-12 relative">
       <header className="bg-lime-400 px-8 py-6 border-b border-lime-500 shadow-sm relative z-20">
