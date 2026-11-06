@@ -3,9 +3,9 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 
-// Zameni sa tvojim pravim Variant ID brojevima sa Lemon Squeezy-ja (7 cifara)
-const MONTHLY_VARIANT_ID = "TVOJ_MESECNI_VARIANT_ID"; 
-const ANNUAL_VARIANT_ID = "TVOJ_GODISNJI_VARIANT_ID";
+// Lemon Squeezy variant IDs
+const MONTHLY_VARIANT_ID = "2342628";
+const ANNUAL_VARIANT_ID = "2342551";
 
 export default function Home() {
   const [user, setUser] = useState(null);
@@ -338,7 +338,7 @@ export default function Home() {
   const selectedVariantId = billingCycle === 'yearly' ? ANNUAL_VARIANT_ID : MONTHLY_VARIANT_ID;
   const getCheckoutUrl = () => {
     if (!user) return '#';
-    return `https://whimperboard.lemonsqueezy.com/checkout/buy/${selectedVariantId}?checkout[custom][user_id]=${user.id}`;
+    return `https://whimperboard.lemonsqueezy.com/buy/${selectedVariantId}?checkout[custom][user_id]=${user.id}`;
   };
 
   if (loadingAuth) {
