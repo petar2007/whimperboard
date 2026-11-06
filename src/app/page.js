@@ -1069,6 +1069,54 @@ export default function Home() {
           </div>
         </div>
       )}
+    <section className="max-w-xl mx-auto px-6 py-16 border-t border-zinc-200 mt-20">
+        <div className="bg-zinc-50 border-2 border-zinc-900 rounded-3xl p-8 shadow-sm">
+          <h3 className="text-xl font-black text-black mb-2">Need Help or Have Questions?</h3>
+          <p className="text-xs text-zinc-600 mb-6 font-medium">
+            Send us a message and we&apos;ll get back to you as soon as possible.
+          </p>
+
+          <form
+            action="https://formspree.io/f/mdeejqgq"
+            method="POST"
+            className="space-y-4"
+          >
+            <input type="hidden" name="_subject" value="Whimperboard contact request" />
+            <div>
+              <label htmlFor="contact-email" className="block text-xs font-bold text-zinc-700 uppercase tracking-wider mb-1">Your Email</label>
+              <input
+                type="email"
+                id="contact-email"
+                name="_replyto"
+                required
+                className="w-full bg-white border border-zinc-300 rounded-xl px-3.5 py-2.5 text-xs text-black focus:outline-none focus:border-black"
+                placeholder="name@example.com"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="contact-message" className="block text-xs font-bold text-zinc-700 uppercase tracking-wider mb-1">Message</label>
+              <textarea
+                id="contact-message"
+                name="message"
+                rows={4}
+                required
+                className="w-full bg-white border border-zinc-300 rounded-xl px-3.5 py-2.5 text-xs text-black focus:outline-none focus:border-black"
+                placeholder="How can we help you?"
+              />
+            </div>
+
+            <button
+              type="submit"
+              className="w-full bg-black hover:bg-zinc-800 text-white font-black text-xs py-3.5 rounded-xl transition shadow-sm"
+            >
+              Send Message
+            </button>
+          </form>
+        </div>
+      </section>
+      {/* --- KRAJ KONTAKT FORME --- */}
+
     </div>
   );
 }
