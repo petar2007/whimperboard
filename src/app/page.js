@@ -398,7 +398,13 @@ export default function Home() {
   };
 
   if (loadingAuth) {
-    return <div className="min-h-screen bg-white flex items-center justify-center font-bold">Loading...</div>;
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-zinc-50 p-6 text-center">
+        <h1 className="text-3xl font-bold text-zinc-900 mb-2">Whimperboard</h1>
+        <p className="text-zinc-600 mb-4">Kennel Management Made Simple. Loading application...</p>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-zinc-900"></div>
+      </div>
+    );
   }
 
   // 1. NEULOGOVANI KORISNIK (Landing Page)

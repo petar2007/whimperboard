@@ -1,8 +1,15 @@
 import './globals.css';
 
 export const metadata = {
-  title: 'Whimperboard - Kennel & Care Management System',
-  description: 'Manage your kennel boxes, dogs and care reminders effortlessly.',
+  title: 'Whimperboard - SaaS Kennel Management',
+  description: 'Manage kennel boxes, subscriptions, and dog profiles effortlessly. 14-day free trial available.',
+  openGraph: {
+    title: 'Whimperboard - Kennel Management Made Simple',
+    description: 'Track and manage your kennel boxes effortlessly.',
+    url: 'https://whimperboard.vercel.app',
+    siteName: 'Whimperboard',
+    type: 'website',
+  },
   manifest: '/manifest.json',
 };
 
