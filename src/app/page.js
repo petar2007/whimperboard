@@ -410,7 +410,7 @@ export default function Home() {
   // 1. NEULOGOVANI KORISNIK (Landing Page)
   if (!user) {
     return (
-      <div className="min-h-screen bg-white text-zinc-900 font-sans">
+      <div className="min-h-screen bg-white text-zinc-900 font-sans flex flex-col">
         <header className="border-b border-zinc-200 py-5 px-8 bg-white sticky top-0 z-30">
           <div className="max-w-6xl mx-auto flex justify-between items-center">
             <div className="flex items-center gap-2">
@@ -514,6 +514,15 @@ export default function Home() {
         </section>
 
         <ContactForm />
+        <footer className="w-full border-t border-zinc-200 py-6 mt-auto text-center text-xs text-zinc-500">
+          <div className="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row justify-between items-center gap-2">
+            <p>© {new Date().getFullYear()} Whimperboard. All rights reserved.</p>
+            <div className="space-x-4">
+              <a href="/terms" className="hover:underline">Terms of Service</a>
+              <a href="/privacy" className="hover:underline">Privacy Policy</a>
+            </div>
+          </div>
+        </footer>
 
         {showAuthModal && (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
