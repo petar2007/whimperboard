@@ -391,11 +391,11 @@ export default function Home() {
   };
 
   // Sastavljanje dinamičkog checkout URL-a za Lemon Squeezy
-  const selectedVariantId = billingCycle === 'yearly' ? ANNUAL_VARIANT_ID : MONTHLY_VARIANT_ID;
-  const getCheckoutUrl = () => {
-    if (!user) return '#';
-    return `https://whimperboard.lemonsqueezy.com/buy/${selectedVariantId}?checkout[custom][user_id]=${user.id}`;
-  };
+ const selectedVariantId = billingCycle === 'yearly' ? ANNUAL_VARIANT_ID : MONTHLY_VARIANT_ID;
+const getCheckoutUrl = () => {
+  if (!user) return '#';
+  return `https://whimperboard.lemonsqueezy.com/checkout/buy/${selectedVariantId}?checkout[custom][user_id]=${user.id}`;
+};
 
   if (loadingAuth) {
     return (
