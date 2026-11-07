@@ -1134,6 +1134,16 @@ export default function Home() {
         </div>
       )}
       <ContactForm />
+      
+      <footer className="w-full border-t border-zinc-200 py-6 mt-auto text-center text-xs text-zinc-500">
+  <div className="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row justify-between items-center gap-2">
+    <p>© {new Date().getFullYear()} Whimperboard. All rights reserved.</p>
+    <div className="space-x-4">
+      <a href="/terms" className="hover:underline">Terms of Service</a>
+      <a href="/privacy" className="hover:underline">Privacy Policy</a>
+    </div>
+  </div>
+</footer>
 
     </div>
   );
