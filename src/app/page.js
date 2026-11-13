@@ -809,7 +809,14 @@ const getCheckoutUrl = () => {
               onClick={() => setMenuOpen(false)}
               className="block w-full text-left px-4 py-2.5 text-sm font-medium text-zinc-700 hover:bg-zinc-100 transition"
             >
-              Terms and conditions
+             Terms and conditions
+            </Link>
+            <Link
+              href="/refund-policy"
+              onClick={() => setMenuOpen(false)}
+              className="block w-full text-left px-4 py-2.5 text-sm font-medium text-zinc-700 hover:bg-zinc-100 transition"
+            >
+              Refund policy
             </Link>
           </div>
         </div>
@@ -1150,6 +1157,7 @@ const getCheckoutUrl = () => {
     <div className="space-x-4">
       <a href="/terms" className="hover:underline">Terms of Service</a>
       <a href="/privacy" className="hover:underline">Privacy Policy</a>
+      <a href="/refund-policy" className="hover:underline">Refund Policy</a>
     </div>
   </div>
 </footer>
