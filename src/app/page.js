@@ -520,6 +520,7 @@ const getCheckoutUrl = () => {
             <div className="space-x-4">
               <a href="/terms" className="hover:underline">Terms of Service</a>
               <a href="/privacy" className="hover:underline">Privacy Policy</a>
+              <a href="/refund-policy" className="hover:underline">Refund Policy</a>
             </div>
           </div>
         </footer>
