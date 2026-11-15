@@ -437,7 +437,7 @@ const getCheckoutUrl = () => {
 
         <section className="max-w-4xl mx-auto text-center px-6 pt-20 pb-16">
           <span className="bg-lime-100 border border-lime-300 text-black text-[11px] font-black uppercase tracking-wider px-3 py-1 rounded-full">
-            Designed for Small Pet Boarding Kennels
+            Built for Pet Boarding, Grooming & Animal Care Facilities
           </span>
           <h1 className="text-5xl sm:text-6xl font-black text-black tracking-tight mt-6 leading-tight">
             Manage your kennel boxes & care reminders effortlessly.
@@ -755,7 +755,7 @@ const getCheckoutUrl = () => {
 
             <div>
               <h1 className="text-3xl font-black tracking-tight text-black">Whimperboard</h1>
-              <p className="text-black/80 font-medium text-sm mt-0.5">Kennel & Care Management System</p>
+              <p className="text-black/80 font-medium text-sm mt-0.5">Pet Boarding & Facility Management System</p>
             </div>
           </div>
 
