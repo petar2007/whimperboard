@@ -469,7 +469,7 @@ const getCheckoutUrl = () => {
                   billingCycle === 'monthly' ? 'bg-black text-white shadow-sm' : 'text-zinc-600 hover:text-black'
                 }`}
               >
-                Monthly (€14)
+                Monthly ($15)
               </button>
               <button
                 onClick={() => setBillingCycle('yearly')}
@@ -477,21 +477,21 @@ const getCheckoutUrl = () => {
                   billingCycle === 'yearly' ? 'bg-lime-400 text-black shadow-sm border border-lime-500' : 'text-zinc-600 hover:text-black'
                 }`}
               >
-                Yearly (€149) ⚡
+                Yearly ($149) ⚡
               </button>
             </div>
 
             <div className="my-6">
               {billingCycle === 'monthly' ? (
                 <div>
-                  <span className="text-5xl font-black text-black">€14</span>
+                  <span className="text-5xl font-black text-black">$15</span>
                   <span className="text-sm font-bold text-zinc-500"> / month</span>
                 </div>
               ) : (
                 <div>
-                  <span className="text-5xl font-black text-black">€149</span>
+                  <span className="text-5xl font-black text-black">$149</span>
                   <span className="text-sm font-bold text-zinc-500"> / year</span>
-                  <p className="text-[11px] font-bold text-emerald-600 mt-1">Save ~€19 compared to monthly billing</p>
+                  <p className="text-[11px] font-bold text-emerald-600 mt-1">Save $30 compared to monthly billing</p>
                 </div>
               )}
             </div>
@@ -680,7 +680,7 @@ const getCheckoutUrl = () => {
                 billingCycle === 'monthly' ? 'bg-black text-white shadow-sm' : 'text-zinc-600 hover:text-black'
               }`}
             >
-              Monthly (€14)
+              Monthly ($15)
             </button>
             <button
               onClick={() => setBillingCycle('yearly')}
@@ -688,21 +688,21 @@ const getCheckoutUrl = () => {
                 billingCycle === 'yearly' ? 'bg-lime-400 text-black shadow-sm border border-lime-500' : 'text-zinc-600 hover:text-black'
               }`}
             >
-              Yearly (€149) ⚡
+              Yearly ($149) ⚡
             </button>
           </div>
 
           <div className="my-6">
             {billingCycle === 'monthly' ? (
               <div>
-                <span className="text-5xl font-black text-black">€14</span>
+                <span className="text-5xl font-black text-black">$15</span>
                 <span className="text-sm font-bold text-zinc-500"> / month</span>
               </div>
             ) : (
               <div>
-                <span className="text-5xl font-black text-black">€149</span>
+                <span className="text-5xl font-black text-black">$149</span>
                 <span className="text-sm font-bold text-zinc-500"> / year</span>
-                <p className="text-[11px] font-bold text-emerald-600 mt-1">Save ~€19 compared to monthly billing</p>
+                <p className="text-[11px] font-bold text-emerald-600 mt-1">Save $30 compared to monthly billing</p>
               </div>
             )}
           </div>
@@ -887,7 +887,7 @@ const getCheckoutUrl = () => {
                     {calculatedTotal !== null && (
                       <div className="bg-lime-200/70 border border-lime-400 rounded-xl p-2.5 mb-3 flex justify-between items-center">
                         <span className="text-[11px] font-bold text-zinc-800 uppercase tracking-wider">Total Stay Due:</span>
-                        <span className="text-sm font-black text-black">€{calculatedTotal}</span>
+                        <span className="text-sm font-black text-black">¤{calculatedTotal.toFixed(2)}</span>
                       </div>
                     )}
 
@@ -1007,7 +1007,7 @@ const getCheckoutUrl = () => {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-zinc-700 uppercase tracking-wider mb-1">Price per Day (€)</label>
+                  <label className="block text-xs font-bold text-zinc-700 uppercase tracking-wider mb-1">Price per Day (¤)</label>
                   <input
                     type="number"
                     step="0.5"
