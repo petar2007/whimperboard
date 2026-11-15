@@ -144,7 +144,7 @@ export default function Home() {
     try {
       const { data, error } = await supabase
         .from('user_boxes')
-        .select('boxes_data, is_pro')
+        .select('boxes_data, is_pro, is_admin') // Dodali smo is_admin ovde
         .eq('user_id', userId)
         .maybeSingle();
 
@@ -154,7 +154,8 @@ export default function Home() {
 
       if (data) {
         if (data.boxes_data) setBoxes(data.boxes_data);
-        setIsPro(Boolean(data.is_pro));
+        // Ako je is_pro ILI je is_admin true, postavi isPro na true!
+        setIsPro(Boolean(data.is_pro || data.is_admin));
       } else {
         setBoxes(defaultBoxes);
         setIsPro(false);
