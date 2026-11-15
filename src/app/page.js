@@ -72,6 +72,7 @@ export default function Home() {
   const [authError, setAuthError] = useState('');
   const [authMessage, setAuthMessage] = useState('');
   const [billingCycle, setBillingCycle] = useState('monthly');
+  const [searchQuery, setSearchQuery] = useState(''); // <--- Pretraga
 
   // App state
   const defaultTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
@@ -824,9 +825,39 @@ const getCheckoutUrl = () => {
         </div>
       )}
 
-      <main className="max-w-6xl mx-auto px-8 pt-8">
+     <main className="max-w-6xl mx-auto px-8 pt-8">
+        {/* Search bar iznad boksova */}
+        <div className="mb-6">
+          <input
+            type="text"
+            placeholder="Search by dog's name or breed..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full sm:w-96 px-4 py-2.5 bg-white border border-zinc-300 rounded-xl shadow-xs text-sm text-black focus:outline-none focus:ring-2 focus:ring-zinc-900"
+          />
+        </div>
+
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-          {boxes.map((box) => {
+          {boxes
+            .filter((box) => {
+              if (!box.pet) return true; // Prazni boksovi ostaju vidljivi
+              const query = searchQuery.toLowerCase();
+              const dogName = box.pet.dogName?.toLowerCase() || '';
+              const breed = box.pet.breed?.toLowerCase() || '';
+              const phone = box.pet.ownerPhone?.toLowerCase() || '';
+              return dogName.includes(query) || breed.includes(query) || phone.includes(query);
+            })
+            .sort((a, b) => {
+              const getClosestReminderTime = (box) => {
+                if (!box.pet?.reminders || box.pet.reminders.length === 0) return Infinity;
+                const times = box.pet.reminders
+                  .map(r => r.date && r.time ? new Date(`${r.date}T${r.time}`).getTime() : Infinity)
+                  .filter(t => !isNaN(t) && t >= Date.now());
+                return times.length > 0 ? Math.min(...times) : Infinity;
+              };
+              return getClosestReminderTime(a) - getClosestReminderTime(b);
+            })
+            .map((box) => {
             const calculatedTotal = box.pet && box.pet.pricePerDay && box.pet.daysCount 
               ? Number(box.pet.pricePerDay) * Number(box.pet.daysCount) 
               : null;
@@ -887,7 +918,7 @@ const getCheckoutUrl = () => {
                     {calculatedTotal !== null && (
                       <div className="bg-lime-200/70 border border-lime-400 rounded-xl p-2.5 mb-3 flex justify-between items-center">
                         <span className="text-[11px] font-bold text-zinc-800 uppercase tracking-wider">Total Stay Due:</span>
-                        <span className="text-sm font-black text-black">¤{calculatedTotal.toFixed(2)}</span>
+                        <span className="text-sm font-black text-black">${calculatedTotal.toFixed(2)}</span>
                       </div>
                     )}
 
