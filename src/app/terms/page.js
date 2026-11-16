@@ -79,7 +79,7 @@ export default function TermsPage() {
             </ol>
           </section>
 
-          {/* 1. OUR SERVICES */}
+         {/* 1. OUR SERVICES */}
           <section className="space-y-3">
             <h2 className="text-lg font-extrabold text-zinc-900">1. Our Services</h2>
             <p>
@@ -87,6 +87,9 @@ export default function TermsPage() {
             </p>
             <p>
               The Services are not tailored to comply with industry-specific regulations (such as HIPAA or FISMA), so if your interactions would be subjected to such laws, you may not use the Services. You may not use the Services in a way that would violate the Gramm-Leach-Bliley Act (GLBA).
+            </p>
+            <p>
+              <strong className="font-bold text-zinc-900">Animal Care &amp; Reminder Disclaimer:</strong> Whimperboard is strictly an organizational and administrative tool. It is not a veterinary, medical, or life-safety monitoring system. Notifications, feeding schedules, medication reminders, and booking alerts rely on internet connectivity, browser behavior, and third-party infrastructure, and are not guaranteed to be error-free or delivered without delay. You, as the kennel operator or pet care provider, remain solely and exclusively responsible for the physical care, feeding, medication, health, and safety of all animals under your supervision. Under no circumstances shall Whimperboard be held liable for any illness, injury, loss, or death of an animal resulting from missed reminders, technical malfunctions, or reliance on the Services.
             </p>
           </section>
 
