@@ -198,6 +198,31 @@ export default function Home() {
       console.error('Error while saving boxes:', err);
     }
   };
+  const saveCustomers = async (newCustomers) => {
+    setCustomers(newCustomers);
+    if (!user) return;
+
+    try {
+      const { data } = await supabase
+        .from('user_boxes')
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (data) {
+        await supabase
+          .from('user_boxes')
+          .update({ customers_data: newCustomers, updated_at: new Date() })
+          .eq('user_id', user.id);
+      } else {
+        await supabase
+          .from('user_boxes')
+          .insert([{ user_id: user.id, boxes_data: boxes, customers_data: newCustomers, is_pro: isPro }]);
+      }
+    } catch (err) {
+      console.error('Error while saving customers:', err);
+    }
+  };
 
   const handleAuth = async (e) => {
     e.preventDefault();
