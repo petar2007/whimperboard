@@ -772,7 +772,7 @@ const getCheckoutUrl = () => {
         <div className="absolute top-24 left-8 bg-white border-2 border-zinc-900 rounded-2xl shadow-2xl w-64 py-3 z-30">
           <div className="px-4 py-2 border-b border-zinc-100">
             <p className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Account</p>
-            <p className="text-sm font-semibold text-zinc-900 truncate">{user.email}</p>
+            <p className="text-sm font-semibold text-zinc-900 truncate">{user?.email}</p>
           </div>
 
           <div className="py-1 border-b border-zinc-100">
@@ -782,6 +782,17 @@ const getCheckoutUrl = () => {
             >
               <span>Install Mobile App</span>
               <span className="text-xs font-black">↓</span>
+            </button>
+          </div>
+
+          {/* CUSTOMER LIST DUGME - između Install App i Log Out */}
+          <div className="py-1 border-b border-zinc-100">
+            <button
+              onClick={() => { setMenuOpen(false); setActiveModal('customerList'); }}
+              className="w-full text-left px-4 py-2.5 text-sm font-semibold text-zinc-800 hover:bg-zinc-100 transition flex items-center justify-between"
+            >
+              <span>Customer List</span>
+              <span className="text-xs font-bold text-zinc-400">👥</span>
             </button>
           </div>
 
@@ -799,27 +810,21 @@ const getCheckoutUrl = () => {
               Delete account
             </button>
           </div>
+          
           <div className="border-t border-zinc-100 py-1">
             <Link
               href="/privacy"
               onClick={() => setMenuOpen(false)}
               className="block w-full text-left px-4 py-2.5 text-sm font-medium text-zinc-700 hover:bg-zinc-100 transition"
             >
-              Privacy policy
+              Privacy Policy
             </Link>
             <Link
-              href="/terms"
+              href="/refund"
               onClick={() => setMenuOpen(false)}
               className="block w-full text-left px-4 py-2.5 text-sm font-medium text-zinc-700 hover:bg-zinc-100 transition"
             >
-             Terms and conditions
-            </Link>
-            <Link
-              href="/refund-policy"
-              onClick={() => setMenuOpen(false)}
-              className="block w-full text-left px-4 py-2.5 text-sm font-medium text-zinc-700 hover:bg-zinc-100 transition"
-            >
-              Refund policy
+              Refund Policy
             </Link>
           </div>
         </div>
@@ -830,7 +835,7 @@ const getCheckoutUrl = () => {
         <div className="mb-6">
           <input
             type="text"
-            placeholder="Search by dog's name or breed..."
+            placeholder="Search by dog's name, phone, or breed..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full sm:w-96 px-4 py-2.5 bg-white border border-zinc-300 rounded-xl shadow-xs text-sm text-black focus:outline-none focus:ring-2 focus:ring-zinc-900"
@@ -1166,7 +1171,7 @@ const getCheckoutUrl = () => {
 
       {activeModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-          <div className="bg-white border-2 border-zinc-900 w-full max-w-md rounded-2xl p-6 shadow-2xl relative">
+          <div className="bg-white border-2 border-zinc-900 w-full max-w-lg rounded-2xl p-6 shadow-2xl relative max-h-[85vh] overflow-y-auto">
             <button onClick={() => setActiveModal(null)} className="absolute top-5 right-5 text-zinc-400 hover:text-black font-bold text-lg">✕</button>
             
             {activeModal === 'delete' && (
@@ -1179,6 +1184,67 @@ const getCheckoutUrl = () => {
                 </div>
               </div>
             )}
+
+            {activeModal === 'customerList' && (
+              <div>
+                <h3 className="text-lg font-black text-zinc-900 mb-1">Customer List</h3>
+                <p className="text-xs text-zinc-500 mb-4">All saved dogs and owners from your boxes. Click the checkmark to quickly assign a customer to the first available empty box.</p>
+                
+                {(() => {
+                  // Izvlačimo sve jedinstvene pse koji su uneti u boksove
+                  const savedCustomers = boxes
+                    .filter(b => b.pet && b.pet.dogName)
+                    .map(b => ({ boxId: b.id, ...b.pet }));
+
+                  if (savedCustomers.length === 0) {
+                    return (
+                      <div className="text-center py-8 text-zinc-400 text-sm">
+                        No customers saved yet. Fill out a box to automatically save customers here!
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div className="space-y-3">
+                      {savedCustomers.map((customer, idx) => (
+                        <div key={idx} className="flex items-center justify-between p-3 bg-zinc-50 border border-zinc-200 rounded-xl">
+                          <div>
+                            <p className="text-sm font-bold text-zinc-900">{customer.dogName} <span className="font-normal text-xs text-zinc-500">({customer.breed || 'No breed'})</span></p>
+                            <p className="text-xs text-zinc-600">Phone: {customer.ownerPhone || 'N/A'}</p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {/* Dugme za brzo dodavanje u prvenstveni prazan boks */}
+                            <button
+                              onClick={() => {
+                                const emptyBox = boxes.find(b => !b.pet);
+                                if (!emptyBox) {
+                                  alert('All boxes are currently full!');
+                                  return;
+                                }
+                                const updatedBoxes = boxes.map(b => 
+                                  b.id === emptyBox.id ? { ...b, pet: { ...customer } } : b
+                                );
+                                saveBoxes(updatedBoxes);
+                                setActiveModal(null);
+                              }}
+                              title="Assign to first empty box"
+                              className="bg-lime-600 hover:bg-lime-700 text-white font-bold text-xs px-3 py-1.5 rounded-lg transition flex items-center gap-1"
+                            >
+                              <span>✓ Assign</span>
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })()}
+
+                <div className="mt-6 flex justify-end">
+                  <button onClick={() => setActiveModal(null)} className="bg-zinc-100 hover:bg-zinc-200 text-zinc-700 font-bold text-xs px-4 py-2 rounded-xl transition">Close</button>
+                </div>
+              </div>
+            )}
+
           </div>
         </div>
       )}
