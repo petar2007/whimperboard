@@ -96,6 +96,7 @@ export default function Home() {
   ];
 
   const [boxes, setBoxes] = useState(defaultBoxes);
+  const [customers, setCustomers] = useState([]);
   const [selectedBox, setSelectedBox] = useState(null);
   const [formData, setFormData] = useState({
     dogName: '',
@@ -145,7 +146,7 @@ export default function Home() {
     try {
       const { data, error } = await supabase
         .from('user_boxes')
-        .select('boxes_data, is_pro, is_admin') // Dodali smo is_admin ovde
+        .select('boxes_data, customers_data, is_pro, is_admin')
         .eq('user_id', userId)
         .maybeSingle();
 
@@ -155,15 +156,17 @@ export default function Home() {
 
       if (data) {
         if (data.boxes_data) setBoxes(data.boxes_data);
-        // Ako je is_pro ILI je is_admin true, postavi isPro na true!
+        if (data.customers_data) setCustomers(data.customers_data);
         setIsPro(Boolean(data.is_pro || data.is_admin));
       } else {
         setBoxes(defaultBoxes);
+        setCustomers([]);
         setIsPro(false);
       }
     } catch (err) {
       console.error('Error while withdrawing user data:', err);
       setBoxes(defaultBoxes);
+      setCustomers([]);
       setIsPro(false);
     } finally {
       setLoadingAuth(false);
@@ -1185,62 +1188,95 @@ const getCheckoutUrl = () => {
               </div>
             )}
 
-            {activeModal === 'customerList' && (
+           {activeModal === 'customerList' && (
               <div>
                 <h3 className="text-lg font-black text-zinc-900 mb-1">Customer List</h3>
-                <p className="text-xs text-zinc-500 mb-4">All saved dogs and owners from your boxes. Click the checkmark to quickly assign a customer to the first available empty box.</p>
-                
-                {(() => {
-                  // Izvlačimo sve jedinstvene pse koji su uneti u boksove
-                  const savedCustomers = boxes
-                    .filter(b => b.pet && b.pet.dogName)
-                    .map(b => ({ boxId: b.id, ...b.pet }));
+                <p className="text-xs text-zinc-500 mb-4">
+                  Saved dogs and owners. Even if you clear or delete a box, customers stay here until you remove them.
+                </p>
 
-                  if (savedCustomers.length === 0) {
-                    return (
-                      <div className="text-center py-8 text-zinc-400 text-sm">
-                        No customers saved yet. Fill out a box to automatically save customers here!
-                      </div>
-                    );
-                  }
-
-                  return (
-                    <div className="space-y-3">
-                      {savedCustomers.map((customer, idx) => (
-                        <div key={idx} className="flex items-center justify-between p-3 bg-zinc-50 border border-zinc-200 rounded-xl">
-                          <div>
-                            <p className="text-sm font-bold text-zinc-900">{customer.dogName} <span className="font-normal text-xs text-zinc-500">({customer.breed || 'No breed'})</span></p>
-                            <p className="text-xs text-zinc-600">Phone: {customer.ownerPhone || 'N/A'}</p>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            {/* Dugme za brzo dodavanje u prvenstveni prazan boks */}
-                            <button
-                              onClick={() => {
-                                const emptyBox = boxes.find(b => !b.pet);
-                                if (!emptyBox) {
-                                  alert('All boxes are currently full!');
-                                  return;
-                                }
-                                const updatedBoxes = boxes.map(b => 
-                                  b.id === emptyBox.id ? { ...b, pet: { ...customer } } : b
-                                );
-                                saveBoxes(updatedBoxes);
-                                setActiveModal(null);
-                              }}
-                              title="Assign to first empty box"
-                              className="bg-lime-600 hover:bg-lime-700 text-white font-bold text-xs px-3 py-1.5 rounded-lg transition flex items-center gap-1"
-                            >
-                              <span>✓ Assign</span>
-                            </button>
-                          </div>
+                {customers.length === 0 ? (
+                  <div className="text-center py-8 text-zinc-400 text-sm">
+                    No customers saved yet. Fill out a box to automatically save customers here!
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {customers.map((customer) => (
+                      <div
+                        key={customer.id}
+                        className="flex items-center justify-between p-3 bg-zinc-50 border border-zinc-200 rounded-xl gap-2"
+                      >
+                        <div className="min-w-0">
+                          <p className="text-sm font-bold text-zinc-900 truncate">
+                            {customer.dogName}{' '}
+                            <span className="font-normal text-xs text-zinc-500">
+                              ({customer.breed || 'No breed'})
+                            </span>
+                          </p>
+                          <p className="text-xs text-zinc-600 truncate">
+                            Phone: {customer.ownerPhone || 'N/A'}
+                          </p>
                         </div>
-                      ))}
-                    </div>
-                  );
-                })()}
+
+                        <div className="flex items-center gap-2 shrink-0">
+                          {/* Zelena kvačica: ubacuje u prvi slobodan boks */}
+                          <button
+                            onClick={() => {
+                              const emptyBox = boxes.find((b) => !b.pet);
+                              if (!emptyBox) {
+                                alert('All boxes are currently full!');
+                                return;
+                              }
+                              const updatedBoxes = boxes.map((b) =>
+                                b.id === emptyBox.id
+                                  ? {
+                                      ...b,
+                                      pet: {
+                                        dogName: customer.dogName || '',
+                                        breed: customer.breed || '',
+                                        ownerPhone: customer.ownerPhone || '',
+                                        entryDate: new Date().toISOString().split('T')[0],
+                                        pricePerDay: customer.pricePerDay || '',
+                                        daysCount: '',
+                                        notes: customer.notes || '',
+                                        reminders: [],
+                                      },
+                                    }
+                                  : b
+                              );
+                              saveBoxes(updatedBoxes);
+                              setActiveModal(null);
+                            }}
+                            title="Assign to first empty box"
+                            className="bg-lime-600 hover:bg-lime-700 text-white font-bold text-xs px-3 py-1.5 rounded-lg transition flex items-center gap-1"
+                          >
+                            <span>✓ Assign</span>
+                          </button>
+
+                          {/* Crveni iks: trajno briše mušteriju sa liste */}
+                          <button
+                            onClick={() => {
+                              const filtered = customers.filter((c) => c.id !== customer.id);
+                              saveCustomers(filtered);
+                            }}
+                            title="Remove from customer list"
+                            className="bg-rose-50 hover:bg-rose-600 text-rose-600 hover:text-white border border-rose-200 hover:border-rose-600 font-bold text-xs w-7 h-7 rounded-lg transition flex items-center justify-center"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
 
                 <div className="mt-6 flex justify-end">
-                  <button onClick={() => setActiveModal(null)} className="bg-zinc-100 hover:bg-zinc-200 text-zinc-700 font-bold text-xs px-4 py-2 rounded-xl transition">Close</button>
+                  <button
+                    onClick={() => setActiveModal(null)}
+                    className="bg-zinc-100 hover:bg-zinc-200 text-zinc-700 font-bold text-xs px-4 py-2 rounded-xl transition"
+                  >
+                    Close
+                  </button>
                 </div>
               </div>
             )}
