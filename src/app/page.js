@@ -869,18 +869,26 @@ const getCheckoutUrl = () => {
             </button>
           </div>
           
-          <div className="border-t border-zinc-100 py-1">
+          
+         <div className="border-t border-zinc-100 py-1">
+            <Link
+              href="/terms"
+              onClick={() => setMenuOpen(false)}
+              className="block w-full text-left px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 transition"
+            >
+              Terms of Service
+            </Link>
             <Link
               href="/privacy"
               onClick={() => setMenuOpen(false)}
-              className="block w-full text-left px-4 py-2.5 text-sm font-medium text-zinc-700 hover:bg-zinc-100 transition"
+              className="block w-full text-left px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 transition"
             >
               Privacy Policy
             </Link>
             <Link
-              href="/refund"
+              href="/refund-policy"
               onClick={() => setMenuOpen(false)}
-              className="block w-full text-left px-4 py-2.5 text-sm font-medium text-zinc-700 hover:bg-zinc-100 transition"
+              className="block w-full text-left px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 transition"
             >
               Refund Policy
             </Link>
