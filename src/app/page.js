@@ -1254,88 +1254,136 @@ const getCheckoutUrl = () => {
            {activeModal === 'customerList' && (
               <div>
                 <h3 className="text-lg font-black text-zinc-900 mb-1">Customer List</h3>
-                <p className="text-xs text-zinc-500 mb-4">
+                <p className="text-xs text-zinc-500 mb-3">
                   Saved dogs and owners. Even if you clear or delete a box, customers stay here until you remove them.
                 </p>
 
-                {customers.length === 0 ? (
-                  <div className="text-center py-8 text-zinc-400 text-sm">
-                    No customers saved yet. Fill out a box to automatically save customers here!
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {customers.map((customer) => (
-                      <div
-                        key={customer.id}
-                        className="flex items-center justify-between p-3 bg-zinc-50 border border-zinc-200 rounded-xl gap-2"
+                {/* Search bar u Customer List modalu */}
+                {customers.length > 0 && (
+                  <div className="relative mb-4">
+                    <input
+                      type="text"
+                      value={customerSearch}
+                      onChange={(e) => setCustomerSearch(e.target.value)}
+                      placeholder="Search by dog name, breed, or phone..."
+                      className="w-full px-3.5 py-2 pr-8 text-xs font-medium text-zinc-900 bg-zinc-50 border border-zinc-200 rounded-xl focus:outline-none focus:border-zinc-900 transition"
+                    />
+                    {customerSearch && (
+                      <button
+                        type="button"
+                        onClick={() => setCustomerSearch('')}
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-700 text-xs font-bold"
                       >
-                        <div className="min-w-0">
-                          <p className="text-sm font-bold text-zinc-900 truncate">
-                            {customer.dogName}{' '}
-                            <span className="font-normal text-xs text-zinc-500">
-                              ({customer.breed || 'No breed'})
-                            </span>
-                          </p>
-                          <p className="text-xs text-zinc-600 truncate">
-                            Phone: {customer.ownerPhone || 'N/A'}
-                          </p>
-                        </div>
-
-                        <div className="flex items-center gap-2 shrink-0">
-                          {/* Zelena kvačica: ubacuje u prvi slobodan boks */}
-                          <button
-                            onClick={() => {
-                              const emptyBox = boxes.find((b) => !b.pet);
-                              if (!emptyBox) {
-                                alert('All boxes are currently full!');
-                                return;
-                              }
-                              const updatedBoxes = boxes.map((b) =>
-                                b.id === emptyBox.id
-                                  ? {
-                                      ...b,
-                                      pet: {
-                                        dogName: customer.dogName || '',
-                                        breed: customer.breed || '',
-                                        ownerPhone: customer.ownerPhone || '',
-                                        entryDate: new Date().toISOString().split('T')[0],
-                                        pricePerDay: customer.pricePerDay || '',
-                                        daysCount: '',
-                                        notes: customer.notes || '',
-                                        reminders: [],
-                                      },
-                                    }
-                                  : b
-                              );
-                              saveBoxes(updatedBoxes);
-                              setActiveModal(null);
-                            }}
-                            title="Assign to first empty box"
-                            className="bg-lime-600 hover:bg-lime-700 text-white font-bold text-xs px-3 py-1.5 rounded-lg transition flex items-center gap-1"
-                          >
-                            <span>✓ Assign</span>
-                          </button>
-
-                          {/* Crveni iks: trajno briše mušteriju sa liste */}
-                          <button
-                            onClick={() => {
-                              const filtered = customers.filter((c) => c.id !== customer.id);
-                              saveCustomers(filtered);
-                            }}
-                            title="Remove from customer list"
-                            className="bg-rose-50 hover:bg-rose-600 text-rose-600 hover:text-white border border-rose-200 hover:border-rose-600 font-bold text-xs w-7 h-7 rounded-lg transition flex items-center justify-center"
-                          >
-                            ✕
-                          </button>
-                        </div>
-                      </div>
-                    ))}
+                        ✕
+                      </button>
+                    )}
                   </div>
                 )}
 
+                {(() => {
+                  const query = customerSearch.toLowerCase().trim();
+                  const filteredCustomers = customers.filter(
+                    (c) =>
+                      (c.dogName || '').toLowerCase().includes(query) ||
+                      (c.breed || '').toLowerCase().includes(query) ||
+                      (c.ownerPhone || '').toLowerCase().includes(query)
+                  );
+
+                  if (customers.length === 0) {
+                    return (
+                      <div className="text-center py-8 text-zinc-400 text-sm">
+                        No customers saved yet. Fill out a box to automatically save customers here!
+                      </div>
+                    );
+                  }
+
+                  if (filteredCustomers.length === 0) {
+                    return (
+                      <div className="text-center py-8 text-zinc-400 text-sm">
+                        No customers match &quot;{customerSearch}&quot;.
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
+                      {filteredCustomers.map((customer) => (
+                        <div
+                          key={customer.id}
+                          className="flex items-center justify-between p-3 bg-zinc-50 border border-zinc-200 rounded-xl gap-2"
+                        >
+                          <div className="min-w-0">
+                            <p className="text-sm font-bold text-zinc-900 truncate">
+                              {customer.dogName}{' '}
+                              <span className="font-normal text-xs text-zinc-500">
+                                ({customer.breed || 'No breed'})
+                              </span>
+                            </p>
+                            <p className="text-xs text-zinc-600 truncate">
+                              Phone: {customer.ownerPhone || 'N/A'}
+                            </p>
+                          </div>
+
+                          <div className="flex items-center gap-2 shrink-0">
+                            {/* Zelena kvačica: ubacuje u prvi slobodan boks */}
+                            <button
+                              onClick={() => {
+                                const emptyBox = boxes.find((b) => !b.pet);
+                                if (!emptyBox) {
+                                  alert('All boxes are currently full!');
+                                  return;
+                                }
+                                const updatedBoxes = boxes.map((b) =>
+                                  b.id === emptyBox.id
+                                    ? {
+                                        ...b,
+                                        pet: {
+                                          dogName: customer.dogName || '',
+                                          breed: customer.breed || '',
+                                          ownerPhone: customer.ownerPhone || '',
+                                          entryDate: new Date().toISOString().split('T')[0],
+                                          pricePerDay: customer.pricePerDay || '',
+                                          daysCount: '',
+                                          notes: customer.notes || '',
+                                          reminders: [],
+                                        },
+                                      }
+                                    : b
+                                );
+                                saveBoxes(updatedBoxes);
+                                setCustomerSearch('');
+                                setActiveModal(null);
+                              }}
+                              title="Assign to first empty box"
+                              className="bg-lime-600 hover:bg-lime-700 text-white font-bold text-xs px-3 py-1.5 rounded-lg transition flex items-center gap-1"
+                            >
+                              <span>✓ Assign</span>
+                            </button>
+
+                            {/* Crveni iks: trajno briše mušteriju sa liste */}
+                            <button
+                              onClick={() => {
+                                const filtered = customers.filter((c) => c.id !== customer.id);
+                                saveCustomers(filtered);
+                              }}
+                              title="Remove from customer list"
+                              className="bg-rose-50 hover:bg-rose-600 text-rose-600 hover:text-white border border-rose-200 hover:border-rose-600 font-bold text-xs w-7 h-7 rounded-lg transition flex items-center justify-center"
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })()}
+
                 <div className="mt-6 flex justify-end">
                   <button
-                    onClick={() => setActiveModal(null)}
+                    onClick={() => {
+                      setCustomerSearch('');
+                      setActiveModal(null);
+                    }}
                     className="bg-zinc-100 hover:bg-zinc-200 text-zinc-700 font-bold text-xs px-4 py-2 rounded-xl transition"
                   >
                     Close
