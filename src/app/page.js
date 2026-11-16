@@ -353,6 +353,36 @@ export default function Home() {
       return b;
     });
     saveBoxes(updatedBoxes);
+
+    // Automatski dodaj ili ažuriraj psa u trajnoj Customer List-i
+    if (formData.dogName?.trim()) {
+      const existsIndex = customers.findIndex(
+        (c) =>
+          c.dogName?.toLowerCase().trim() === formData.dogName.toLowerCase().trim() &&
+          (c.ownerPhone || '').trim() === (formData.ownerPhone || '').trim()
+      );
+
+      let updatedCustomers;
+      if (existsIndex > -1) {
+        updatedCustomers = customers.map((c, idx) =>
+          idx === existsIndex ? { ...c, ...formData } : c
+        );
+      } else {
+        updatedCustomers = [
+          {
+            id: Date.now(),
+            dogName: formData.dogName,
+            breed: formData.breed || '',
+            ownerPhone: formData.ownerPhone || '',
+            pricePerDay: formData.pricePerDay || '',
+            notes: formData.notes || '',
+          },
+          ...customers,
+        ];
+      }
+      saveCustomers(updatedCustomers);
+    }
+
     setSelectedBox(null);
   };
 
