@@ -97,6 +97,7 @@ export default function Home() {
 
   const [boxes, setBoxes] = useState(defaultBoxes);
   const [customers, setCustomers] = useState([]);
+  const [customerSearch, setCustomerSearch] = useState('');
   const [selectedBox, setSelectedBox] = useState(null);
   const [formData, setFormData] = useState({
     dogName: '',
@@ -1258,8 +1259,7 @@ const getCheckoutUrl = () => {
                   Saved dogs and owners. Even if you clear or delete a box, customers stay here until you remove them.
                 </p>
 
-                {/* Search bar u Customer List modalu */}
-                {customers.length > 0 && (
+                {Array.isArray(customers) && customers.length > 0 && (
                   <div className="relative mb-4">
                     <input
                       type="text"
@@ -1281,15 +1281,16 @@ const getCheckoutUrl = () => {
                 )}
 
                 {(() => {
-                  const query = customerSearch.toLowerCase().trim();
-                  const filteredCustomers = customers.filter(
+                  const safeCustomers = Array.isArray(customers) ? customers : [];
+                  const query = (customerSearch || '').toLowerCase().trim();
+                  const filteredCustomers = safeCustomers.filter(
                     (c) =>
-                      (c.dogName || '').toLowerCase().includes(query) ||
-                      (c.breed || '').toLowerCase().includes(query) ||
-                      (c.ownerPhone || '').toLowerCase().includes(query)
+                      (c?.dogName || '').toLowerCase().includes(query) ||
+                      (c?.breed || '').toLowerCase().includes(query) ||
+                      (c?.ownerPhone || '').toLowerCase().includes(query)
                   );
 
-                  if (customers.length === 0) {
+                  if (safeCustomers.length === 0) {
                     return (
                       <div className="text-center py-8 text-zinc-400 text-sm">
                         No customers saved yet. Fill out a box to automatically save customers here!
@@ -1307,9 +1308,9 @@ const getCheckoutUrl = () => {
 
                   return (
                     <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
-                      {filteredCustomers.map((customer) => (
+                      {filteredCustomers.map((customer, index) => (
                         <div
-                          key={customer.id}
+                          key={customer.id || index}
                           className="flex items-center justify-between p-3 bg-zinc-50 border border-zinc-200 rounded-xl gap-2"
                         >
                           <div className="min-w-0">
@@ -1325,7 +1326,6 @@ const getCheckoutUrl = () => {
                           </div>
 
                           <div className="flex items-center gap-2 shrink-0">
-                            {/* Zelena kvačica: ubacuje u prvi slobodan boks */}
                             <button
                               onClick={() => {
                                 const emptyBox = boxes.find((b) => !b.pet);
@@ -1360,10 +1360,9 @@ const getCheckoutUrl = () => {
                               <span>✓ Assign</span>
                             </button>
 
-                            {/* Crveni iks: trajno briše mušteriju sa liste */}
                             <button
                               onClick={() => {
-                                const filtered = customers.filter((c) => c.id !== customer.id);
+                                const filtered = safeCustomers.filter((c) => c.id !== customer.id);
                                 saveCustomers(filtered);
                               }}
                               title="Remove from customer list"
