@@ -3,9 +3,9 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 
-// Lemon Squeezy variant IDs
-const MONTHLY_VARIANT_ID = "2342628";
-const ANNUAL_VARIANT_ID = "2342551";
+// Paddle Price IDs (zameni sa pravim pri_... ID-jevima iz Paddle-a)
+const PADDLE_MONTHLY_PRICE_ID = "pri_01_monthly_placeholder";
+const PADDLE_ANNUAL_PRICE_ID = "pri_01_annual_placeholder";
 
 function ContactForm() {
   return (
@@ -451,12 +451,14 @@ export default function Home() {
     saveBoxes([...boxes, newBox]);
   };
 
-  // Sastavljanje dinamičkog checkout URL-a za Lemon Squeezy
- const selectedVariantId = billingCycle === 'yearly' ? ANNUAL_VARIANT_ID : MONTHLY_VARIANT_ID;
-const getCheckoutUrl = () => {
-  if (!user) return '#';
-  return `https://whimperboard.lemonsqueezy.com/checkout/buy/${selectedVariantId}?checkout[custom][user_id]=${user.id}`;
-};
+  const handleOpenCheckout = () => {
+    if (!user) {
+      alert('Please log in first to subscribe.');
+      return;
+    }
+    const priceId = billingCycle === 'yearly' ? PADDLE_ANNUAL_PRICE_ID : PADDLE_MONTHLY_PRICE_ID;
+    console.log('Paddle checkout spreman za:', priceId, 'User ID:', user.id);
+  };
 
   if (loadingAuth) {
     return (
@@ -773,14 +775,13 @@ const getCheckoutUrl = () => {
             <li className="flex items-center gap-2">✓ Cancel Anytime With 1 Click</li>
           </ul>
 
-          <a
-            href={getCheckoutUrl()}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="block w-full bg-lime-400 hover:bg-lime-500 text-black font-black text-sm py-4 rounded-xl border border-lime-500 shadow-md transition text-center"
+         <button
+            type="button"
+            onClick={handleOpenCheckout}
+            className="block w-full bg-lime-400 hover:bg-lime-500 text-black font-black text-sm py-4 rounded-xl border border-lime-500 shadow-md transition text-center cursor-pointer"
           >
-            Enter Card & Start Trial
-          </a>
+            Enter Card &amp; Start Trial
+          </button>
 
           <div className="mt-6 pt-4 border-t border-zinc-100 flex justify-between items-center text-xs">
             <span className="text-zinc-500 truncate max-w-[180px]">{user.email}</span>
