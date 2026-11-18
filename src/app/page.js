@@ -1,10 +1,12 @@
 'use client';
+
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import FaqAccordion from '@/components/FaqAccordion';
+import { initializePaddle } from '@paddle/paddle-js';
 
-// Paddle Price IDs (zameni sa pravim pri_... ID-jevima iz Paddle-a)
+// Paddle Price IDs
 const PADDLE_MONTHLY_PRICE_ID = "pri_01m7q8pgqrasrmjf993cg2nxqb";
 const PADDLE_ANNUAL_PRICE_ID = "pri_01m7q8vp5pc34hs2n8928zp3h8";
 
