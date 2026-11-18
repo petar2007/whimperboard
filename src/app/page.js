@@ -113,6 +113,37 @@ export default function Home() {
   const [activeModal, setActiveModal] = useState(null);
   const [deferredPrompt, setDeferredPrompt] = useState(null);
 
+  async function fetchUserData(userId) {
+    try {
+      const { data, error } = await supabase
+        .from('user_boxes')
+        .select('boxes_data, customers_data, is_pro, is_admin')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      if (error) {
+        console.error('Error fetching user data:', error.message);
+      }
+
+      if (data) {
+        if (data.boxes_data) setBoxes(data.boxes_data);
+        if (data.customers_data) setCustomers(data.customers_data);
+        setIsPro(Boolean(data.is_pro || data.is_admin));
+      } else {
+        setBoxes(defaultBoxes);
+        setCustomers([]);
+        setIsPro(false);
+      }
+    } catch (err) {
+      console.error('Error while withdrawing user data:', err);
+      setBoxes(defaultBoxes);
+      setCustomers([]);
+      setIsPro(false);
+    } finally {
+      setLoadingAuth(false);
+    }
+  }
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       const currentUser = session?.user ?? null;
@@ -143,37 +174,6 @@ export default function Home() {
 
     return () => subscription.unsubscribe();
   }, []);
-
-  const fetchUserData = async (userId) => {
-    try {
-      const { data, error } = await supabase
-        .from('user_boxes')
-        .select('boxes_data, customers_data, is_pro, is_admin')
-        .eq('user_id', userId)
-        .maybeSingle();
-
-      if (error) {
-        console.error('Error fetching user data:', error.message);
-      }
-
-      if (data) {
-        if (data.boxes_data) setBoxes(data.boxes_data);
-        if (data.customers_data) setCustomers(data.customers_data);
-        setIsPro(Boolean(data.is_pro || data.is_admin));
-      } else {
-        setBoxes(defaultBoxes);
-        setCustomers([]);
-        setIsPro(false);
-      }
-    } catch (err) {
-      console.error('Error while withdrawing user data:', err);
-      setBoxes(defaultBoxes);
-      setCustomers([]);
-      setIsPro(false);
-    } finally {
-      setLoadingAuth(false);
-    }
-  };
 
   const saveBoxes = async (newBoxes) => {
     setBoxes(newBoxes);
