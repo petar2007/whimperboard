@@ -490,6 +490,7 @@ export default function Home() {
         displayMode: 'overlay',
         theme: 'light',
         locale: 'en',
+        successUrl: window.location.origin, // <--- OVO DODAJEMO OVDE
       },
     });
   };
