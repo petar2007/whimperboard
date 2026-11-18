@@ -158,7 +158,7 @@ export default function Home() {
     }
   }
 
-  useEffect(() => {
+ useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       const currentUser = session?.user ?? null;
       setUser(currentUser);
@@ -169,6 +169,17 @@ export default function Home() {
       }
     });
 
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('success') === 'true') {
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session?.user) {
+          fetchUserData(session.user.id);
+        }
+      });
+    }
+  }, []);
+
+  useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       const currentUser = session?.user ?? null;
       setUser(currentUser);
@@ -181,12 +192,17 @@ export default function Home() {
       }
     });
 
-    window.addEventListener('beforeinstallprompt', (e) => {
+    const handleBeforeInstall = (e) => {
       e.preventDefault();
       setDeferredPrompt(e);
-    });
+    };
 
-    return () => subscription.unsubscribe();
+    window.addEventListener('beforeinstallprompt', handleBeforeInstall);
+
+    return () => {
+      subscription.unsubscribe();
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
+    };
   }, []);
 
   const saveBoxes = async (newBoxes) => {
@@ -490,7 +506,7 @@ export default function Home() {
         displayMode: 'overlay',
         theme: 'light',
         locale: 'en',
-        successUrl: window.location.origin, // <--- OVO DODAJEMO OVDE
+        successUrl: `${window.location.origin}?success=true`, // <--- OVO DODAJEMO OVDE
       },
     });
   };
