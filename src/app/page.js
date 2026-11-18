@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
+import FaqAccordion from '@/components/FaqAccordion';
 
 // Paddle Price IDs (zameni sa pravim pri_... ID-jevima iz Paddle-a)
 const PADDLE_MONTHLY_PRICE_ID = "pri_01_monthly_placeholder";
@@ -577,6 +578,22 @@ export default function Home() {
         </section>
 
         <ContactForm />
+        {/* FAQ / Q&A SEKCIJA NA POČETNOJ STRANICI */}
+      <section id="faq" className="max-w-3xl mx-auto px-4 sm:px-6 py-16">
+        <div className="text-center mb-8">
+          <span className="inline-block text-xs font-extrabold uppercase tracking-wider text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full mb-3">
+            Q&amp;A
+          </span>
+          <h2 className="text-2xl sm:text-3xl font-black text-zinc-900">
+            Frequently Asked Questions
+          </h2>
+          <p className="text-sm text-zinc-500 mt-2">
+            Everything you need to know about Whimperboard, pricing, and data security.
+          </p>
+        </div>
+
+        <FaqAccordion />
+      </section>
         <footer className="w-full border-t border-zinc-200 py-6 mt-auto text-center text-xs text-zinc-500">
           <div className="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row justify-between items-center gap-2">
             <p>© {new Date().getFullYear()} Whimperboard. All rights reserved.</p>
@@ -1396,17 +1413,37 @@ export default function Home() {
         </div>
       )}
       <ContactForm />
-      
+
+      {/* FAQ / Q&A SEKCIJA (Prikazuje se na dnu početne stranice) */}
+      {!user && (
+        <section id="faq" className="max-w-3xl mx-auto px-4 sm:px-6 py-16">
+          <div className="text-center mb-8">
+            <span className="inline-block text-xs font-extrabold uppercase tracking-wider text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full mb-3">
+              Q&amp;A
+            </span>
+            <h2 className="text-2xl sm:text-3xl font-black text-zinc-900">
+              Frequently Asked Questions
+            </h2>
+            <p className="text-sm text-zinc-500 mt-2">
+              Everything you need to know about Whimperboard, pricing, and data security.
+            </p>
+          </div>
+
+          <FaqAccordion />
+        </section>
+      )}
+
+      {/* ZAJEDNIČKI FUTER */}
       <footer className="w-full border-t border-zinc-200 py-6 mt-auto text-center text-xs text-zinc-500">
-  <div className="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row justify-between items-center gap-2">
-    <p>© {new Date().getFullYear()} Whimperboard. All rights reserved.</p>
-    <div className="space-x-4">
-      <a href="/terms" className="hover:underline">Terms of Service</a>
-      <a href="/privacy" className="hover:underline">Privacy Policy</a>
-      <a href="/refund-policy" className="hover:underline">Refund Policy</a>
-    </div>
-  </div>
-</footer>
+        <div className="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row justify-between items-center gap-2">
+          <p>© {new Date().getFullYear()} Whimperboard. All rights reserved.</p>
+          <div className="space-x-4">
+            <a href="/terms" className="hover:underline">Terms of Service</a>
+            <a href="/privacy" className="hover:underline">Privacy Policy</a>
+            <a href="/refund-policy" className="hover:underline">Refund Policy</a>
+          </div>
+        </div>
+      </footer>
 
     </div>
   );
