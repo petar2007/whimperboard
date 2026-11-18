@@ -5,8 +5,8 @@ import { supabase } from '@/lib/supabase';
 import FaqAccordion from '@/components/FaqAccordion';
 
 // Paddle Price IDs (zameni sa pravim pri_... ID-jevima iz Paddle-a)
-const PADDLE_MONTHLY_PRICE_ID = "pri_01_monthly_placeholder";
-const PADDLE_ANNUAL_PRICE_ID = "pri_01_annual_placeholder";
+const PADDLE_MONTHLY_PRICE_ID = "pri_01m7q8pgqrasrmjf993cg2nxqb";
+const PADDLE_ANNUAL_PRICE_ID = "pri_01m7q8vp5pc34hs2n8928zp3h8";
 
 function ContactForm() {
   return (
@@ -63,6 +63,18 @@ export default function Home() {
   const [user, setUser] = useState(null);
   const [isPro, setIsPro] = useState(false);
   const [loadingAuth, setLoadingAuth] = useState(true);
+  const [paddle, setPaddle] = useState(null);
+
+  useEffect(() => {
+    initializePaddle({
+      environment: process.env.NEXT_PUBLIC_PADDLE_ENV || 'sandbox',
+      token: process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN,
+    }).then((paddleInstance) => {
+      if (paddleInstance) {
+        setPaddle(paddleInstance);
+      }
+    });
+  }, []);
   
   // Auth forme state
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -457,19 +469,28 @@ export default function Home() {
       alert('Please log in first to subscribe.');
       return;
     }
-    const priceId = billingCycle === 'yearly' ? PADDLE_ANNUAL_PRICE_ID : PADDLE_MONTHLY_PRICE_ID;
-    console.log('Paddle checkout spreman za:', priceId, 'User ID:', user.id);
-  };
+    if (!paddle) {
+      alert('Payment system is still loading, please try again in a second.');
+      return;
+    }
 
-  if (loadingAuth) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-zinc-50 p-6 text-center">
-        <h1 className="text-3xl font-bold text-zinc-900 mb-2">Whimperboard</h1>
-        <p className="text-zinc-600 mb-4">Kennel Management Made Simple. Loading application...</p>
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-zinc-900"></div>
-      </div>
-    );
-  }
+    const priceId = billingCycle === 'yearly' ? PADDLE_ANNUAL_PRICE_ID : PADDLE_MONTHLY_PRICE_ID;
+
+    paddle.Checkout.open({
+      items: [{ priceId, quantity: 1 }],
+      customer: {
+        email: user.email,
+      },
+      customData: {
+        user_id: user.id,
+      },
+      settings: {
+        displayMode: 'overlay',
+        theme: 'light',
+        locale: 'en',
+      },
+    });
+  };
 
   // 1. NEULOGOVANI KORISNIK (Landing Page)
   if (!user) {
