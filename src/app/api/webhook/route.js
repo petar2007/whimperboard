@@ -28,16 +28,17 @@ export async function POST(req) {
       const status = data.status; // 'active', 'trialing', 'canceled', itd.
 
       if (userId) {
-        // Ako je status aktivan ili trial, korisnik je Pro
         const isPro = status === 'active' || status === 'trialing';
 
         const { error } = await supabaseAdmin
           .from('user_boxes')
-          .update({ is_pro: isPro })
-          .eq('user_id', userId);
+          .upsert(
+            { user_id: userId, is_pro: isPro },
+            { onConflict: 'user_id' }
+          );
 
         if (error) {
-          console.error('Error updating Supabase database:', error.message);
+          console.error('Error when writing to the subbase database:', error.message);
           return NextResponse.json({ error: error.message }, { status: 500 });
         }
       }
