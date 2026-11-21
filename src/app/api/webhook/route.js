@@ -33,12 +33,16 @@ export async function POST(req) {
         const { error } = await supabaseAdmin
           .from('user_boxes')
           .upsert(
-            { user_id: userId, is_pro: isPro },
+            {
+              user_id: userId,
+              is_pro: isPro,
+              boxes_data: [],
+            },
             { onConflict: 'user_id' }
           );
 
         if (error) {
-          console.error('Error when writing to the subbase database:', error.message);
+          console.error('Error writing to the Supabase database:', error.message);
           return NextResponse.json({ error: error.message }, { status: 500 });
         }
       }
