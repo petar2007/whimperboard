@@ -159,24 +159,38 @@ export default function Home() {
   }
 
  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      const currentUser = session?.user ?? null;
-      setUser(currentUser);
-      if (currentUser) {
-        fetchUserData(currentUser.id);
-      } else {
-        setLoadingAuth(false);
-      }
-    });
+    let isMounted = true;
 
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('success') === 'true') {
-      supabase.auth.getSession().then(({ data: { session } }) => {
-        if (session?.user) {
-          fetchUserData(session.user.id);
+    const loadSessionAndCheckSuccess = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      const currentUser = session?.user ?? null;
+
+      if (!isMounted) return;
+      setUser(currentUser);
+
+      if (!currentUser) {
+        setLoadingAuth(false);
+        return;
+      }
+
+      await fetchUserData(currentUser.id);
+
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('success') === 'true') {
+        // Kratka pauza da webhook sigurno završi upis u user_boxes, pa još jedan fetch
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+        if (isMounted) {
+          await fetchUserData(currentUser.id);
+          window.history.replaceState({}, '', window.location.pathname);
         }
-      });
-    }
+      }
+    };
+
+    loadSessionAndCheckSuccess();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   useEffect(() => {
