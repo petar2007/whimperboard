@@ -28,38 +28,66 @@ export async function POST(req) {
       const status = data.status; // 'active', 'trialing', 'canceled', itd.
 
       if (userId) {
-        const isPro = status === 'active' || status === 'trialing';
+        const subscriptionId =
+  typeof eventType === 'string' && eventType.startsWith('subscription.')
+    ? data?.id
+    : null;
 
-        const { error } = await supabaseAdmin
+const isPro = status === 'active' || status === 'trialing';
+
+// Ako je pretplata otkazana, ne pravi novi red ako korisnik više ne postoji u bazi
+if (eventType === 'subscription.canceled') {
+  const { data: existingRow } = await supabaseAdmin
+    .from('user_boxes')
+    .select('user_id')
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (!existingRow) {
+    return NextResponse.json({ received: true });
+  }
+}
+
+const rowToSave = {
+  user_id: userId,
+  is_pro: isPro,
+  boxes_data: [],
+};
+
+if (subscriptionId) {
+  rowToSave.paddle_subscription_id = subscriptionId;
+}
+
+const { error } = await supabaseAdmin
           .from('user_boxes')
-          .upsert(
-            {
-              user_id: userId,
-              is_pro: isPro,
-              boxes_data: [],
-            },
-            { onConflict: 'user_id' }
-          );
+          .upsert(rowToSave, { onConflict: 'user_id' });
 
         if (error) {
           console.error('Error writing to the Supabase database:', error.message);
           return NextResponse.json({ error: error.message }, { status: 500 });
         }
       }
-    } 
-    // Ako je pretplata otkazana
-    else if (eventType === 'subscription.canceled') {
-      const customData = data.custom_data;
+    } else if (eventType === 'subscription.canceled') {
+      const customData = data?.custom_data;
       const userId = customData?.user_id;
 
       if (userId) {
-        const { error } = await supabaseAdmin
+        const { data: existingRow } = await supabaseAdmin
           .from('user_boxes')
-          .update({ is_pro: false })
-          .eq('user_id', userId);
+          .select('user_id')
+          .eq('user_id', userId)
+          .maybeSingle();
 
-        if (error) {
-          console.error('Error canceling Pro status:', error.message);
+        if (existingRow) {
+          const { error } = await supabaseAdmin
+            .from('user_boxes')
+            .update({ is_pro: false })
+            .eq('user_id', userId);
+
+          if (error) {
+            console.error('Error canceling Pro status:', error.message);
+            return NextResponse.json({ error: error.message }, { status: 500 });
+          }
         }
       }
     }
