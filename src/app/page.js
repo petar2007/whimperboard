@@ -66,6 +66,7 @@ export default function Home() {
   const [isPro, setIsPro] = useState(false);
   const [loadingAuth, setLoadingAuth] = useState(true);
   const [paddle, setPaddle] = useState(null);
+  const [activatingPro, setActivatingPro] = useState(false);
 
   useEffect(() => {
     initializePaddle({
@@ -173,14 +174,36 @@ export default function Home() {
         return;
       }
 
+      const urlParams = new URLSearchParams(window.location.search);
+      const isCheckoutSuccess = urlParams.get('success') === 'true';
+
+      if (isCheckoutSuccess) {
+        setActivatingPro(true);
+      }
+
       await fetchUserData(currentUser.id);
 
-      const urlParams = new URLSearchParams(window.location.search);
-      if (urlParams.get('success') === 'true') {
-        // Kratka pauza da webhook sigurno završi upis u user_boxes, pa još jedan fetch
-        await new Promise((resolve) => setTimeout(resolve, 1500));
+      if (isCheckoutSuccess && isMounted) {
+        // Proverava bazu do 10 puta (svakih 1.5s) dok is_pro ne postane true
+        for (let attempt = 0; attempt < 10; attempt++) {
+          if (!isMounted) return;
+
+          const { data } = await supabase
+            .from('user_boxes')
+            .select('is_pro, is_admin')
+            .eq('user_id', currentUser.id)
+            .maybeSingle();
+
+          if (data?.is_pro || data?.is_admin) {
+            await fetchUserData(currentUser.id);
+            break;
+          }
+
+          await new Promise((resolve) => setTimeout(resolve, 1500));
+        }
+
         if (isMounted) {
-          await fetchUserData(currentUser.id);
+          setActivatingPro(false);
           window.history.replaceState({}, '', window.location.pathname);
         }
       }
@@ -789,7 +812,20 @@ export default function Home() {
       </div>
     );
   }
-
+if (activatingPro) {
+    return (
+      <div className="min-h-screen bg-zinc-50 text-zinc-900 font-sans flex flex-col justify-center items-center px-6 py-12">
+        <div className="max-w-md w-full bg-white border-2 border-zinc-900 rounded-3xl p-8 shadow-2xl relative text-center">
+          <p className="text-lg font-bold text-zinc-900 mb-2">
+            Activating your Pro subscription...
+          </p>
+          <p className="text-sm text-zinc-600">
+            Please wait a moment while we confirm your payment.
+          </p>
+        </div>
+      </div>
+    );
+  }
   // 2. ULOGOVAN KORISNIK KOJI NEMA AKTIVNU PRETPLATU (Paywall Gate)
   if (!isPro) {
     return (
