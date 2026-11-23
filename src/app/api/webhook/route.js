@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import crypto from 'crypto';
 
 // Supabase admin klijent (koristi service_role ključ da zaobiđe row-level security i upiše u bazu)
 const supabaseAdmin = createClient(
@@ -7,9 +8,44 @@ const supabaseAdmin = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
+function verifyPaddleSignature(rawBody, signatureHeader, secretKey) {
+  if (!signatureHeader || !secretKey) return false;
+
+  const parts = Object.fromEntries(
+    signatureHeader.split(';').map((part) => {
+      const [key, val] = part.split('=');
+      return [key?.trim(), val?.trim()];
+    })
+  );
+
+  const ts = parts.ts;
+  const h1 = parts.h1;
+  if (!ts || !h1) return false;
+
+  const signedPayload = `${ts}:${rawBody}`;
+  const expectedSignature = crypto
+    .createHmac('sha256', secretKey)
+    .update(signedPayload)
+    .digest('hex');
+
+  const h1Buffer = Buffer.from(h1, 'hex');
+  const expectedBuffer = Buffer.from(expectedSignature, 'hex');
+
+  if (h1Buffer.length !== expectedBuffer.length) return false;
+  return crypto.timingSafeEqual(h1Buffer, expectedBuffer);
+}
+
 export async function POST(req) {
   try {
     const rawBody = await req.text();
+    const signatureHeader = req.headers.get('paddle-signature');
+    const webhookSecret = process.env.PADDLE_WEBHOOK_SECRET;
+
+    if (!verifyPaddleSignature(rawBody, signatureHeader, webhookSecret)) {
+      console.error('Invalid Paddle webhook signature');
+      return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
+    }
+
     const eventData = JSON.parse(rawBody);
 
     const eventType = eventData.event_type;

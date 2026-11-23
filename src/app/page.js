@@ -7,8 +7,8 @@ import FaqAccordion from '@/components/FaqAccordion';
 import { initializePaddle } from '@paddle/paddle-js';
 
 // Paddle Price IDs
-const PADDLE_MONTHLY_PRICE_ID = "pri_01m7q8pgqrasrmjf993cg2nxqb";
-const PADDLE_ANNUAL_PRICE_ID = "pri_01m7q8vp5pc34hs2n8928zp3h8";
+const PADDLE_MONTHLY_PRICE_ID = "pri_01m849m84kd4gpwzbveq23yngd";
+const PADDLE_ANNUAL_PRICE_ID = "pri_01m849pdy5yw73jnkyvw7kftg1";
 
 function ContactForm() {
   return (
@@ -70,7 +70,7 @@ export default function Home() {
 
   useEffect(() => {
     initializePaddle({
-      environment: process.env.NEXT_PUBLIC_PADDLE_ENV || 'sandbox',
+      environment: process.env.NEXT_PUBLIC_PADDLE_ENV || 'production',
       token: process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN,
     }).then((paddleInstance) => {
       if (paddleInstance) {
