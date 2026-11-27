@@ -552,27 +552,29 @@ export default function Home() {
   if (!user) {
     return (
       <div className="min-h-screen bg-white text-zinc-900 font-sans flex flex-col">
-        <header className="border-b border-zinc-200 py-5 px-8 bg-white sticky top-0 z-30">
-          <div className="max-w-6xl mx-auto flex justify-between items-center">
-            <div className="flex items-center gap-2">
-              <span className="text-2xl font-black tracking-tight">Whimperboard</span>
-            </div>
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => { setIsSignUp(false); setShowAuthModal(true); setAuthError(''); }}
-                className="text-xs font-bold text-zinc-700 hover:text-black transition"
-              >
-                Log In
-              </button>
-              <button
-                onClick={() => { setIsSignUp(true); setShowAuthModal(true); setAuthError(''); }}
-                className="bg-lime-400 hover:bg-lime-500 text-black font-black text-xs px-4 py-2.5 rounded-xl border border-lime-500 shadow-sm transition"
-              >
-                Start Free Trial
-              </button>
-            </div>
-          </div>
-        </header>
+        <header className="border-b border-zinc-200 py-3.5 px-4 md:py-5 md:px-8 bg-white sticky top-0 z-30">
+  <div className="max-w-6xl mx-auto flex justify-between items-center gap-2">
+    <div className="flex items-center gap-2 min-w-0">
+      <span className="text-lg sm:text-xl md:text-2xl font-black tracking-tight truncate">
+        Whimperboard
+      </span>
+    </div>
+    <div className="flex items-center gap-3 md:gap-4 shrink-0">
+      <button
+        onClick={() => { setIsSignUp(false); setShowAuthModal(true); setAuthError(''); }}
+        className="text-xs font-bold text-zinc-700 hover:text-black transition whitespace-nowrap shrink-0"
+      >
+        Log In
+      </button>
+      <button
+        onClick={() => { setIsSignUp(true); setShowAuthModal(true); setAuthError(''); }}
+        className="bg-lime-400 hover:bg-lime-500 text-black font-black text-xs px-3 py-2 md:px-4 md:py-2.5 rounded-xl border border-lime-500 shadow-sm transition whitespace-nowrap shrink-0"
+      >
+        Start Free Trial
+      </button>
+    </div>
+  </div>
+</header>
 
         <section className="max-w-4xl mx-auto text-center px-6 pt-20 pb-16">
           <span className="bg-lime-100 border border-lime-300 text-black text-[11px] font-black uppercase tracking-wider px-3 py-1 rounded-full">
@@ -907,33 +909,37 @@ if (activatingPro) {
   // 3. ULOGOVAN KORISNIK SA AKTIVNOM PRETPOLATOM (Glavni Dashboard)
   return (
     <div className="min-h-screen bg-white text-zinc-900 font-sans pb-12 relative">
-      <header className="bg-lime-400 px-8 py-6 border-b border-lime-500 shadow-sm relative z-20">
-        <div className="max-w-6xl mx-auto flex justify-between items-center">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => setMenuOpen(!menuOpen)}
-              className="w-10 h-10 bg-black hover:bg-zinc-800 rounded-xl flex flex-col justify-center items-center gap-1.5 p-2 transition shadow-md focus:outline-none"
-              aria-label="Toggle Menu"
-            >
-              <span className={`w-5 h-0.5 bg-white transition-transform duration-300 ${menuOpen ? 'rotate-90 translate-y-2' : ''}`} />
-              <span className={`w-5 h-0.5 bg-white transition-opacity duration-300 ${menuOpen ? 'opacity-0' : 'opacity-100'}`} />
-              <span className={`w-5 h-0.5 bg-white transition-transform duration-300 ${menuOpen ? '-rotate-90 -translate-y-2' : ''}`} />
-            </button>
+      <header className="bg-lime-400 px-3.5 py-4 md:px-8 md:py-6 border-b border-lime-500 shadow-sm relative z-20">
+  <div className="max-w-6xl mx-auto flex justify-between items-center gap-2.5 md:gap-4">
+    <div className="flex items-center gap-2.5 md:gap-4 min-w-0">
+      <button
+        onClick={() => setMenuOpen(!menuOpen)}
+        className="w-10 h-10 shrink-0 bg-black hover:bg-zinc-800 rounded-xl flex flex-col justify-center items-center gap-1.5 p-2 transition shadow-md focus:outline-none"
+        aria-label="Toggle Menu"
+      >
+        <span className={`w-5 h-0.5 bg-white transition-transform duration-300 ${menuOpen ? 'rotate-90 translate-y-2' : ''}`} />
+        <span className={`w-5 h-0.5 bg-white transition-opacity duration-300 ${menuOpen ? 'opacity-0' : 'opacity-100'}`} />
+        <span className={`w-5 h-0.5 bg-white transition-transform duration-300 ${menuOpen ? '-rotate-90 -translate-y-2' : ''}`} />
+      </button>
 
-            <div>
-              <h1 className="text-3xl font-black tracking-tight text-black">Whimperboard</h1>
-              <p className="text-black/80 font-medium text-sm mt-0.5">Pet Boarding & Facility Management System</p>
-            </div>
-          </div>
+      <div className="min-w-0">
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-black tracking-tight text-black leading-tight truncate">
+          Whimperboard
+        </h1>
+        <p className="text-black/80 font-medium text-xs md:text-sm mt-0.5 leading-snug">
+          Pet Boarding & Facility Management System
+        </p>
+      </div>
+    </div>
 
-          <button
-            onClick={handleAddNewBox}
-            className="bg-black hover:bg-zinc-800 text-white font-bold text-sm px-4 py-2.5 rounded-xl transition shadow-md"
-          >
-            + Add Box
-          </button>
-        </div>
-      </header>
+    <button
+      onClick={handleAddNewBox}
+      className="bg-black hover:bg-zinc-800 text-white font-bold text-xs md:text-sm px-3 py-2 md:px-4 md:py-2.5 rounded-xl transition shadow-md whitespace-nowrap shrink-0"
+    >
+      + Add Box
+    </button>
+  </div>
+</header>
 
       {menuOpen && (
         <div className="absolute top-24 left-8 bg-white border-2 border-zinc-900 rounded-2xl shadow-2xl w-64 py-3 z-30">
