@@ -353,29 +353,40 @@ export default function Home() {
   const handleDeleteAccount = async () => {
     if (!user) return;
 
-    const userIdToDelete = user.id;
-
     try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (!session?.access_token) {
+        alert('Session expired. Please log in again before deleting your account.');
+        return;
+      }
+
+      const response = await fetch('/api/delete-user', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
+
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to delete account');
+      }
+
       await supabase.auth.signOut();
       setUser(null);
       setBoxes(defaultBoxes);
       setIsPro(false);
       setActiveModal(null);
 
-      const response = await fetch('/api/delete-user', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: userIdToDelete }),
-      });
-
-      const result = await response.json();
-      if (!response.ok) throw new Error(result.error || 'Failed to delete account');
-
       alert('Your account and all associated data have been completely deleted.');
       window.location.href = '/';
     } catch (err) {
       console.error(err);
-      window.location.href = '/';
+      alert(err.message || 'Failed to delete account. Please try again.');
     }
   };
 
